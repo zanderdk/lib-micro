@@ -1,0 +1,4 @@
+.org 0x7c00
+.patch 0x58ba
+
+UJMP(, 0x017a)

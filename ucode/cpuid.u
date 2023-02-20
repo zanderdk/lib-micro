@@ -1,0 +1,37 @@
+.org 0x7c10
+.patch 0x0be0
+tmp2:= MOVE_DSZ64(0x8000)
+tmp2:= SHL_DSZ64(tmp2, 0x10)
+tmp2:= OR_DSZ64(tmp2, 0x0002)
+tmp2:= XOR_DSZ64(tmp2, rax)
+UJMPCC_DIRECT_NOTTAKEN_CONDZ(tmp2, <fun1>)
+
+UJMP(, <goback>)
+
+<fun1>
+# 496e 7465 6c20 7938 3720 3838 6269 7400
+rax:= MOVE_DSZ32(0x6574)
+rax:= SHL_DSZ32(rax, 0x00000010)
+rax:= OR_DSZ32(rax, 0x6e49)
+
+rbx:= MOVE_DSZ32(0x3879)
+rbx:= SHL_DSZ32(rbx, 0x00000010)
+rbx:= OR_DSZ32(rbx, 0x206c)
+
+rcx:= MOVE_DSZ32(0x3838)
+rcx:= SHL_DSZ32(rcx, 0x00000010)
+rcx:= OR_DSZ32(rcx, 0x2037)
+
+rdx:= MOVE_DSZ32(0x0074)
+rdx:= SHL_DSZ32(rdx, 0x00000010)
+rdx:= OR_DSZ32(rdx, 0x6962)
+
+UJMP(, <end>)
+
+<goback>
+tmp0:= MOVE_DSZ32(0x0000000a)
+UJMP(, 0x4808)
+
+<end>
+NOP
+
