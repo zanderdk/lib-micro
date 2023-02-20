@@ -1,0 +1,4 @@
+[submodule "CustomProcessingUnit"]
+	path = CustomProcessingUnit
+	url = https://github.com/zanderdk/CustomProcessingUnit
+	branch = pacman
