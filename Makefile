@@ -1,27 +1,29 @@
 CC = gcc
 CFLAGS = -O0 -static -ggdb -Wall
 
-SOURCES = main.c
+SOURCES = $(wildcard *.c)
 OBJECTS = $(SOURCES:.c=.o)
 
-upload: main
+U_SOURCES := $(wildcard ucode/*.u)
+U_HEADERS = $(U_SOURCES:.u=.h)
+
+TARGET = main
+
+upload: $(TARGET)
 	scp main myldero@up:/home/myldero/
 
-build-ucode:
-	./CustomProcessingUnit/uasm-lib/uasm.py -i ucode/fix_in.u --avoid_unk_256 -o ./ucode/fix_in.h
-	./CustomProcessingUnit/uasm-lib/uasm.py -i ucode/cpuid.u --avoid_unk_256 -o ./ucode/cpuid.h
-	./CustomProcessingUnit/uasm-lib/uasm.py -i ucode/trace.u --avoid_unk_256 -o ./ucode/trace.h
-	./CustomProcessingUnit/uasm-lib/uasm.py -i ucode/match_and_patch_hook.u --avoid_unk_256 -o ./ucode/match_and_patch_hook.h
-	./CustomProcessingUnit/uasm-lib/uasm.py -i ucode/match_and_patch_init.u --avoid_unk_256 -o ./ucode/match_and_patch_init.h
-	./CustomProcessingUnit/uasm-lib/uasm.py -i ucode/ldat_read.u --avoid_unk_256 -o ./ucode/ldat_read.h
+./ucode/%.h: ./ucode/%.u
+	./CustomProcessingUnit/uasm-lib/uasm.py -i $^ --avoid_unk_256 -o $@
 
-build: main
+build-ucode: $(U_HEADERS)
 
-main: build-ucode
+build: $(TARGET)
+
+$(TARGET): build-ucode
 	$(CC) $(CFLAGS) $(SOURCES) $(LIBS) -o $@
 
 clean:
-	rm -f $(OBJECTS) ucode/*.h
+	rm -f $(TARGET) $(OBJECTS) ucode/*.h
 
-.PHONY: upload
-
+.PHONY: upload build build-ucode
+.DEFAULT_GOAL := upload
