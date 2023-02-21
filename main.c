@@ -1,7 +1,8 @@
 #define _GNU_SOURCE
 
 #include "main.h"
-
+#include<argp.h>
+#include <string.h>
 
 cpu_set_t set;
 void assign_to_core(int core_id) {
@@ -131,64 +132,159 @@ cpuinfo_res static inline cpuinfo(u64 arg1) {
     return result;
 }
 
+const char *argp_program_version = "custom-cpu v0.1";
+static char doc[] = "Tool for patching ucode";
+static char args_doc[] = "";
+
+// cli argument availble options.
+static struct argp_option options[] = {
+    {.name="verbose", .key='v', .arg=NULL, .flags=0, .doc="Produce verbose output"},
+    {.name="reset", .key='r', .arg=NULL, .flags=0, .doc="reset match & patch"},
+    {.name="cpuid", .key='i', .arg=NULL, .flags=0, .doc="patch cpuid"},
+    {.name="trace", .key='t', .arg="uaddr", .flags=0, .doc="trace ucode addr"},
+    {.name="dump", .key='d', .arg="array", .flags=0, .doc="dump array"},
+    {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
+    {0}
+};
+
+
+// define a struct to hold the arguments.
+struct arguments{
+    u8 verbose;
+    u8 reset;
+    u8 cpuid;
+    s32 trace_addr;
+    s8 array;
+    s8 core;
+};
+
+
+// define a function which will parse the args.
+static error_t parse_opt(int key, char *arg, struct argp_state *state){
+
+    struct arguments *arguments = state->input;
+    switch(key){
+
+        case 'v':
+            arguments->verbose = 1;
+            break;
+        case 'r':
+            arguments->reset = 1;
+            break;
+        case 'i':
+            arguments->cpuid = 1;
+            break;
+        case 't':
+            arguments->trace_addr = atoi(arg);
+            if (arguments->trace_addr < 0){
+                argp_usage(state);
+                exit(EXIT_FAILURE);
+            }
+            break;
+        case 'd':
+            arguments->array = atoi(arg);
+            if (arguments->array < 0 || arguments->array > 4){
+                argp_usage(state);
+                exit(EXIT_FAILURE);
+            }
+            break;
+        case 'c':
+            arguments->core = atoi(arg);
+            if (arguments->core < 0 || arguments->core > 3){
+                argp_usage(state);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        /* case ARGP_KEY_ARG: */
+
+        /*     // Too many arguments. */
+        /*     if(state->arg_num > 1) */
+        /*         argp_usage(state); */
+        /*     break; */
+
+        /* case ARGP_KEY_END: */
+        /*     // Not enough arguments. */
+        /*     if(state->arg_num < 1) */
+        /*         argp_usage(state); */
+        /*     break; */
+
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+
+    return 0;
+}
+
+
+// initialize the argp struct. Which will be used to parse and use the args.
+static struct argp argp = {options, parse_opt, args_doc, doc};
+u8 verbose = 0;
 
 int main(int argc, char* argv[]) {
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
-    
 
-    if (argc < 3) {
-        printf("Usage: %s <r|t|c|d> <core> [...]\n", argv[0]);
-        exit(-1);
+    struct arguments arguments;
+    memset(&arguments, 0, sizeof(struct arguments));
+    arguments.trace_addr = -1;
+    arguments.array = -1;
+    arguments.core = -1;
+
+    argp_parse(&argp, argc, argv, 0, 0, &arguments);
+    verbose = arguments.verbose;
+
+    if (verbose) {
+        puts("arguments:");
+        printf("\tverbose: %d\n", arguments.verbose);
+        printf("\treset: %d\n", arguments.reset);
+        printf("\tcpuid: %d\n", arguments.cpuid);
+        printf("\ttrace_addr: 0xl%x\n", (u32)arguments.trace_addr);
+        printf("\tarray: %d\n", arguments.array);
+        printf("\tcore: %d\n", arguments.core);
     }
-    
-    int core = atoi(argv[2]);
+
+    u8 core = (arguments.core < 0)? 0 : arguments.core;
     if (0 <= core && core <= 3) 
-        assign_to_core(atoi(argv[2]));
-    
-    if (argv[1][0] == 'r') { // Reset match and patch
+        assign_to_core(core);
+    else {
+        printf("core out of bound");
+        exit(EXIT_FAILURE);
+    }
+
+    if (arguments.reset) { // Reset match and patch
         init_match_and_patch();
         do_fix_IN_patch();
     }
 
-    if (argv[1][0] == 't') { // Do trace
-        if (argc < 4) {
-            printf("Missing trace address arg\n");
-            exit(-1);
-        }
-
+    if (arguments.trace_addr > -1) { // Do trace
         uram_write(0x69, 0xd00df00d);
-        u64 trace_addr;
-        if (sscanf(argv[3], "%lx", &trace_addr) != 1) {
-            printf("scanf failed\n");
-            exit(-1);
-        }
+        u64 trace_addr = arguments.trace_addr;
         insert_trace(trace_addr);
-        for (int i = 0; i < 100; i++) {
-            usleep(250000);
-            if (uram_read(0x69) != 0xd00df00d) {
-                printf("\nrip: 0x%016lx\n", uram_read(0x69));
-                return 0;
-            }
-            printf(".");
-        }
-        printf("\nPath not hit\n");
+        //TODO: fix shit
+        /* for (int i = 0; i < 100; i++) { */
+        /*     usleep(250000); */
+        /*     if (uram_read(0x69) != 0xd00df00d) { */
+        /*         printf("\nrip: 0x%016lx\n", uram_read(0x69)); */
+        /*         return 0; */
+        /*     } */
+        /*     printf("."); */
+        /* } */
+        /* printf("\nPath not hit\n"); */
     }
         
-    if (argv[1][0] == 'c') { // Patch cpuid
+    if (arguments.cpuid) { // Patch cpuid
         do_cpuid_patch();
 
-        cpuinfo_res result = cpuinfo(0x80000002);
-	    printf("cpuinfo: %08x %08x %08x %08x\n", result.rax, result.rbx, result.rcx, result.rdx);
+        if (verbose) {
+            cpuinfo_res result = cpuinfo(0x80000002);
+            printf("cpuinfo: %08x %08x %08x %08x\n", result.rax, result.rbx, result.rcx, result.rdx);
+        }
     }
     
-    if (argv[1][0] == 'd') { // Dump array
-        if (argc < 4) {
-            printf("Missing array index\n");
-            exit(-1);
-        }
-        u8 array_idx = argv[3][0] - '0';
+    if (arguments.array > -1) { // Dump array
+        u8 array_idx = arguments.array;
         if (array_idx == 0) {
             ms_rom_dump();
         } else if (array_idx == 1) {
@@ -203,4 +299,5 @@ int main(int argc, char* argv[]) {
             printf("Invalid array index\n");
         }
     }
+    return 0;
 }
