@@ -391,6 +391,16 @@ void ms_patch_ram_dump(void){
     ms_array_dump(4, 0, 0x200);
 }
 
+void uram_dump(void) {
+    for (u64 i = 0; i < 0x200; i++) {
+        u64 val0 = uram_read(i);
+        u64 val1 = uram_read(i+1);
+        u64 val2 = uram_read(i+2);
+        u64 val3 = uram_read(i+3);
+        printf("%04lx: %016lx %016lx %016lx %016lx\n", i, val0, val1, val2, val3);
+    }
+}
+
 
 
 

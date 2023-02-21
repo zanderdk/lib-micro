@@ -4,6 +4,8 @@
 #include<argp.h>
 #include <string.h>
 
+u8 verbose = 0;
+
 cpu_set_t set;
 void assign_to_core(int core_id) {
     cpu_set_t cpuset;
@@ -33,7 +35,8 @@ void init_match_and_patch(void) {
     #include "ucode/match_and_patch_init.h"
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     u64 ret = ucode_invoke(addr);
-    printf("init_match_and_patch: %lx\n", ret);
+    if (verbose)
+        printf("init_match_and_patch: %lx\n", ret);
     enable_match_and_patch();
 }
 
@@ -54,7 +57,8 @@ static inline void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch
     #include "ucode/match_and_patch_hook.h"
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     u64 ret = ucode_invoke_2(addr, patch_value, entry_idx<<1);
-    printf("hook_match_and_patch: %lx\n", ret);
+    if (verbose)
+        printf("hook_match_and_patch: %lx\n", ret);
 }
 
 __attribute__((always_inline))
@@ -68,14 +72,16 @@ static inline u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64
 
 void do_fix_IN_patch() {
     #include "ucode/fix_in.h"
-    printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
+    if (verbose)
+        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     hook_match_and_patch(0x1f, hook_address, addr);
 }
 
 void do_cpuid_patch() {
     #include "ucode/cpuid.h"
-    printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
+    if (verbose)
+        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     hook_match_and_patch(0, hook_address, addr);
 }
@@ -88,14 +94,14 @@ u64 make_seqw_goto_syncfull(u64 target_addr) {
     return seqw | (parity0(seqw) << 28) | (parity1(seqw) << 29);
 }
 void insert_trace(u64 tracing_addr) {
-	#include "ucode/trace.h"
-	
+    #include "ucode/trace.h"
+
     u64 n_tetrads = sizeof(ucode_patch) / sizeof(ucode_patch[0]);
     u64 seqw_goto = make_seqw_goto_syncfull(tracing_addr);
     u64 curr_seqw = ucode_patch[n_tetrads-1][3];
     if (curr_seqw != END_SEQWORD) {
         printf("[-] The tracing patch has no simple END_SEQWORD at the end\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     ucode_patch[n_tetrads-1][3] = seqw_goto;
     if (ucode_patch[n_tetrads-1][0] == END_UNKOWN_UOP) ucode_patch[n_tetrads-1][0] = 0;
@@ -108,10 +114,10 @@ void insert_trace(u64 tracing_addr) {
 
 
 typedef struct {
-	u32 rax;
-	u32 rbx;
-	u32 rcx;
-	u32 rdx;
+    u32 rax;
+    u32 rbx;
+    u32 rcx;
+    u32 rdx;
 } cpuinfo_res;
 
 __attribute__((always_inline))
@@ -141,8 +147,10 @@ static struct argp_option options[] = {
     {.name="verbose", .key='v', .arg=NULL, .flags=0, .doc="Produce verbose output"},
     {.name="reset", .key='r', .arg=NULL, .flags=0, .doc="reset match & patch"},
     {.name="cpuid", .key='i', .arg=NULL, .flags=0, .doc="patch cpuid"},
+    {.name="wait_trace", .key='w', .arg=NULL, .flags=0, .doc="wait for hit on trace"},
+    {.name="dump_ram", .key='d', .arg=NULL, .flags=0, .doc="dump uram"},
     {.name="trace", .key='t', .arg="uaddr", .flags=0, .doc="trace ucode addr"},
-    {.name="dump", .key='d', .arg="array", .flags=0, .doc="dump array"},
+    {.name="dump_array", .key='a', .arg="array", .flags=0, .doc="dump array"},
     {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
     {0}
 };
@@ -152,6 +160,8 @@ static struct argp_option options[] = {
 struct arguments{
     u8 verbose;
     u8 reset;
+    u8 uram;
+    u8 wait;
     u8 cpuid;
     s32 trace_addr;
     s8 array;
@@ -174,6 +184,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
         case 'i':
             arguments->cpuid = 1;
             break;
+        case 'd':
+            arguments->uram = 1;
+            break;
+        case 'w':
+            arguments->wait = 1;
+            break;
         case 't':
             arguments->trace_addr = atoi(arg);
             if (arguments->trace_addr < 0){
@@ -181,7 +197,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
                 exit(EXIT_FAILURE);
             }
             break;
-        case 'd':
+        case 'a':
             arguments->array = atoi(arg);
             if (arguments->array < 0 || arguments->array > 4){
                 argp_usage(state);
@@ -196,19 +212,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             }
             break;
 
-        /* case ARGP_KEY_ARG: */
-
-        /*     // Too many arguments. */
-        /*     if(state->arg_num > 1) */
-        /*         argp_usage(state); */
-        /*     break; */
-
-        /* case ARGP_KEY_END: */
-        /*     // Not enough arguments. */
-        /*     if(state->arg_num < 1) */
-        /*         argp_usage(state); */
-        /*     break; */
-
         default:
             return ARGP_ERR_UNKNOWN;
     }
@@ -219,7 +222,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
 
 // initialize the argp struct. Which will be used to parse and use the args.
 static struct argp argp = {options, parse_opt, args_doc, doc};
-u8 verbose = 0;
 
 int main(int argc, char* argv[]) {
     setbuf(stdin, NULL);
@@ -237,12 +239,15 @@ int main(int argc, char* argv[]) {
 
     if (verbose) {
         puts("arguments:");
-        printf("\tverbose: %d\n", arguments.verbose);
-        printf("\treset: %d\n", arguments.reset);
-        printf("\tcpuid: %d\n", arguments.cpuid);
-        printf("\ttrace_addr: 0xl%x\n", (u32)arguments.trace_addr);
-        printf("\tarray: %d\n", arguments.array);
-        printf("\tcore: %d\n", arguments.core);
+        printf("\tverbose:       %d\n", arguments.verbose);
+        printf("\treset:         %d\n", arguments.reset);
+        printf("\tcpuid:         %d\n", arguments.cpuid);
+        printf("\ttrace_addr:    0x%x\n", (u32)arguments.trace_addr);
+        printf("\twait:          %d\n", arguments.wait);
+        printf("\tarray:         %d\n", arguments.array);
+        printf("\turam:          %d\n", arguments.uram);
+        printf("\tcore:          %d\n", arguments.core);
+        puts("");
     }
 
     u8 core = (arguments.core < 0)? 0 : arguments.core;
@@ -262,16 +267,17 @@ int main(int argc, char* argv[]) {
         uram_write(0x69, 0xd00df00d);
         u64 trace_addr = arguments.trace_addr;
         insert_trace(trace_addr);
-        //TODO: fix shit
-        /* for (int i = 0; i < 100; i++) { */
-        /*     usleep(250000); */
-        /*     if (uram_read(0x69) != 0xd00df00d) { */
-        /*         printf("\nrip: 0x%016lx\n", uram_read(0x69)); */
-        /*         return 0; */
-        /*     } */
-        /*     printf("."); */
-        /* } */
-        /* printf("\nPath not hit\n"); */
+        if (arguments.wait) {
+            for (int i = 0; i < 100; i++) {
+                usleep(250000);
+                if (uram_read(0x69) != 0xd00df00d) {
+                    printf("\nrip: 0x%016lx\n", uram_read(0x69));
+                    return 0;
+                }
+                printf(".");
+            }
+            printf("\nPath not hit\n");
+        }
     }
         
     if (arguments.cpuid) { // Patch cpuid
@@ -299,5 +305,10 @@ int main(int argc, char* argv[]) {
             printf("Invalid array index\n");
         }
     }
+
+    if(arguments.uram) {
+        uram_dump();
+    }
+
     return 0;
 }
