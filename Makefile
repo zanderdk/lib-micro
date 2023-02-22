@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O0 -static -ggdb -Wall
+CFLAGS = -O0 -static -ggdb -Wall -masm=intel
 
 SOURCES = $(wildcard *.c)
 OBJECTS = $(SOURCES:.c=.o)

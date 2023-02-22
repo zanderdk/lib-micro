@@ -4,12 +4,8 @@
 #include<argp.h>
 #include <string.h>
 
-#define END_UNKOWN_UOP (0x125600000000uL)
-#define NOP_SEQWORD (0x0000300000c0uL)
-#define END_SEQWORD (0x130000f2)
-#define UJMP_OP 0x15d00000000UL
-#define IMM_ENCODE(imm_val) \
-    ((imm_val & 0xff) << 24) | ((imm_val & 0x1f00)<< 10) | ((imm_val & 0xe000) >> 7) | (1 << 9)
+#include "opcode.h"
+#include "ucode_macro.h"
 
 u8 verbose = 0;
 
@@ -96,6 +92,7 @@ void do_cpuid_patch() {
 void install_jump_target(u64 uaddr) {
     #include "ucode/jump_target.h"
     staging_write(0xba40, uaddr);
+    staging_write(0xba80, 0xcafebabe);
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
@@ -105,29 +102,21 @@ void install_jump_target(u64 uaddr) {
 
 void persistent_trace(u64 hook_address) {
     install_jump_target(hook_address);
-    u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & 0x3FFFFFFFFFFFLU;
-    u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & 0x3FFFFFFFFFFFLU;
-    u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & 0x3FFFFFFFFFFFLU;
-    u64 seq =  ldat_array_read(0x6a0, 1, 0, 0, hook_address) & 0xFFFFFFFLU; //sequence word
-    seq |= (parity0(seq) << 28) | (parity1(seq) << 29);
+    u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & CRC_UOP_MASK;
+    u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & CRC_UOP_MASK;
+    u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & CRC_UOP_MASK;
+    u64 seq =  ldat_array_read(0x6a0, 1, 0, 0, hook_address) & CRC_SEQ_MASK; //sequence word
 
-    u64 imm = IMM_ENCODE((hook_address+4));
-    u64 jmp_addr = imm | UJMP_OP;
-
-    jmp_addr |= (parity1(jmp_addr) << 45) | (parity0(jmp_addr) << 46);
-
-    uop0 |= (parity1(uop0) << 45) | (parity0(uop0) << 46); //YES IT'S parity1 at 45 not 46
-    uop1 |= (parity1(uop1) << 45) | (parity0(uop1) << 46);
-    uop2 |= (parity1(uop2) << 45) | (parity0(uop2) << 46);
+    uop0 = CRC_UOP(uop0);
+    uop1 = CRC_UOP(uop1);
+    uop2 = CRC_UOP(uop2);
+    seq = CRC_SEQ(seq);
 
     if (verbose) {
         printf("uop0: 0x%012lx\n", uop0);
         printf("uop1: 0x%012lx\n", uop1);
         printf("uop2: 0x%012lx\n", uop2);
         printf("seq: 0x%012lx\n", seq);
-        printf("UJMP_OP: 0x%012lx\n", UJMP_OP);
-        printf("imm: 0x%012lx\n", imm);
-        printf("jmp_addr: 0x%012lx\n", jmp_addr);
     }
     /* #include "ucode/persistent_trace.h" */
 
@@ -144,7 +133,7 @@ void persistent_trace(u64 hook_address) {
         // U7c20: orig uops
         {uop0, uop1, uop2, seq},
         // U7c24: UJMP(, hook_address); NOP; NOP
-        {jmp_addr, 0x0, 0x0, 0x300000c0}
+        {UJMP(hook_address+4), 0x0, 0x0, 0x300000c0}
     };
 
     if (verbose) {
@@ -296,12 +285,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
 }
 
 __attribute__((always_inline))
-cpuinfo_res static inline try_xlat(u64 addr) {
-    u64 rax = 0xdeaddeaddeaddead;
+cpuinfo_res static inline try_xlat(u64 val) {
+    u64 rax = val;
     cpuinfo_res result;
     lmfence();
     asm volatile(
-        "pause\n\t"
+        "iretq\n\t"
         : "=a" (result.rax)
         , "=b" (result.rbx)
         , "=c" (result.rcx)
@@ -316,8 +305,9 @@ cpuinfo_res static inline try_xlat(u64 addr) {
 void xlat_fuzzing(void) {
     u64 cpuid_xlat = 0x0be0;
     u64 pause_xlat = 0x0bf0;
-    persistent_trace(pause_xlat);
-    cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadLL);
+    u64 iret_xlat = 0x07c8;
+    persistent_trace(iret_xlat);
+    cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
     printf("rcx:        0x%lx\n", val.rcx);

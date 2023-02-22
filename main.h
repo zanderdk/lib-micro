@@ -219,25 +219,6 @@ SA_STATUS static inline sa_write_opcode(SA_ADDR addr, SA_VALUE value, uint32_t o
     return (SA_STATUS)udbgwr(0xC8, addr, (uint64_t)value | ((uint64_t)opcode << 32)).status;
 }
 
-u64 parity0(u64 value) {
-    u64 parity = 0;
-    while (value) {
-        parity ^= (value & 1);
-        value = value >> 2;
-    }
-    return parity;
-}
-
-u64 parity1(u64 value) {
-    u64 parity = 0;
-    value = value >> 1;
-    while (value) {
-        parity ^= (value & 1);
-        value = value >> 2;
-    }
-    return parity;
-}
-
 __attribute__((always_inline))
 static inline void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n);
 
