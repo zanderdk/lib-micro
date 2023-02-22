@@ -4,6 +4,13 @@
 #include<argp.h>
 #include <string.h>
 
+#define END_UNKOWN_UOP (0x125600000000uL)
+#define NOP_SEQWORD (0x0000300000c0uL)
+#define END_SEQWORD (0x130000f2)
+#define UJMP_OP 0x15d00000000UL
+#define IMM_ENCODE(imm_val) \
+    ((imm_val & 0xff) << 24) | ((imm_val & 0x1f00)<< 10) | ((imm_val & 0xe000) >> 7) | (1 << 9)
+
 u8 verbose = 0;
 
 cpu_set_t set;
@@ -86,9 +93,72 @@ void do_cpuid_patch() {
     hook_match_and_patch(0, hook_address, addr);
 }
 
-#define END_UNKOWN_UOP (0x125600000000uL)
-#define NOP_SEQWORD (0x0000300000c0uL)
-#define END_SEQWORD (0x130000f2)
+void install_jump_target(void) {
+    #include "ucode/jump_target.h"
+    if (verbose)
+        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
+    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    if (verbose)
+        printf("jump_target return value: 0x%lx\n", ucode_invoke(0x7d00));
+}
+
+void persistent_trace(u64 hook_address) {
+    install_jump_target();
+    u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & 0x3FFFFFFFFFFFLU;
+    u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & 0x3FFFFFFFFFFFLU;
+    u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & 0x3FFFFFFFFFFFLU;
+    u64 seq =  ldat_array_read(0x6a0, 1, 0, 0, hook_address) & 0xFFFFFFFLU; //sequence word
+    seq |= (parity0(seq) << 28) | (parity1(seq) << 29);
+
+    u64 imm = IMM_ENCODE((hook_address+4));
+    u64 jmp_addr = imm | UJMP_OP;
+
+    jmp_addr |= (parity1(jmp_addr) << 45) | (parity0(jmp_addr) << 46);
+
+    uop0 |= (parity1(uop0) << 45) | (parity0(uop0) << 46); //YES IT'S parity1 at 45 not 46
+    uop1 |= (parity1(uop1) << 45) | (parity0(uop1) << 46);
+    uop2 |= (parity1(uop2) << 45) | (parity0(uop2) << 46);
+
+    if (verbose) {
+        printf("uop0: 0x%012lx\n", uop0);
+        printf("uop1: 0x%012lx\n", uop1);
+        printf("uop2: 0x%012lx\n", uop2);
+        printf("seq: 0x%012lx\n", seq);
+        printf("UJMP_OP: 0x%012lx\n", UJMP_OP);
+        printf("imm: 0x%012lx\n", imm);
+        printf("jmp_addr: 0x%012lx\n", jmp_addr);
+    }
+    /* #include "ucode/persistent_trace.h" */
+
+    unsigned long addr = 0x7c10;
+    unsigned long ucode_patch[][4] = {
+        // U7c10: WRITEURAM(tmp0, 0x01a0, 64); tmp0:= MOVE_DSZ64(0xdead); tmp0:= SHL_DSZ64(tmp0, 0x10)
+        {0x8043a0040230, 0x8049ad7b000e, 0x406410030230, 0x300000c0},
+        // U7c14: tmp0:= OR_DSZ64(tmp0, 0xdead); tmp0:= SHL_DSZ64(tmp0, 0x10); tmp0:= OR_DSZ64(tmp0, 0xdead)
+        {0xc041ad7b03b0, 0x406410030230, 0xc041ad7b03b0, 0x300000c0},
+        // U7c18: tmp0:= SHL_DSZ64(tmp0, 0x10); tmp0:= OR_DSZ64(tmp0, 0xdead); tmp0:= XOR_DSZ64(tmp0, rax)
+        {0x406410030230, 0xc041ad7b03b0, 0x4600030830, 0x300000c0},
+        // U7c1c: UJMPCC_DIRECT_NOTTAKEN_CONDZ(tmp0, 0x7d00); tmp0:= READURAM( , 0x01a0, 64); NOP
+        {0x150007402f0, 0x63a0070200, 0x0, 0x300000c0},
+        // U7c20: orig uops
+        {uop0, uop1, uop2, seq},
+        // U7c24: UJMP(, hook_address); NOP; NOP
+        {jmp_addr, 0x0, 0x0, 0x300000c0}
+    };
+
+    if (verbose) {
+        for (u64 i = 0; i < sizeof(ucode_patch) / sizeof(ucode_patch[0]); i++) {
+            printf("%04lx: %012lx %012lx %012lx %012lx\n", i, ucode_patch[i][0], ucode_patch[i][1], ucode_patch[i][2], ucode_patch[i][3]);
+        }
+    }
+
+    if (verbose)
+        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
+    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    hook_match_and_patch(0, hook_address, addr);
+
+}
+
 u64 make_seqw_goto_syncfull(u64 target_addr) {
     u64 seqw =  0x9000080 | ((target_addr & 0x7fff) << 8);
     return seqw | (parity0(seqw) << 28) | (parity1(seqw) << 29);
@@ -114,10 +184,10 @@ void insert_trace(u64 tracing_addr) {
 
 
 typedef struct {
-    u32 rax;
-    u32 rbx;
-    u32 rcx;
-    u32 rdx;
+    u64 rax;
+    u64 rbx;
+    u64 rcx;
+    u64 rdx;
 } cpuinfo_res;
 
 __attribute__((always_inline))
@@ -149,6 +219,7 @@ static struct argp_option options[] = {
     {.name="cpuid", .key='i', .arg=NULL, .flags=0, .doc="patch cpuid"},
     {.name="wait_trace", .key='w', .arg=NULL, .flags=0, .doc="wait for hit on trace"},
     {.name="dump_ram", .key='d', .arg=NULL, .flags=0, .doc="dump uram"},
+    {.name="xlat_fuzz", .key='x', .arg=NULL, .flags=0, .doc="start fuzzing xlats"},
     {.name="trace", .key='t', .arg="uaddr", .flags=0, .doc="trace ucode addr"},
     {.name="dump_array", .key='a', .arg="array", .flags=0, .doc="dump array"},
     {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
@@ -163,6 +234,7 @@ struct arguments{
     u8 uram;
     u8 wait;
     u8 cpuid;
+    u8 xlat;
     s32 trace_addr;
     s8 array;
     s8 core;
@@ -177,6 +249,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
 
         case 'v':
             arguments->verbose = 1;
+            break;
+        case 'x':
+            arguments->xlat = 1;
             break;
         case 'r':
             arguments->reset = 1;
@@ -219,6 +294,28 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
     return 0;
 }
 
+__attribute__((always_inline))
+uint64_t static inline try_xlat(u64 addr) {
+    u64 rax = addr;
+    lmfence();
+    asm volatile(
+        "pause\n\t" //TODO fuzz this one
+        : "+a" (rax)
+        :
+        : "rbx", "rdx", "rdi", "rsi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+    );
+    lmfence();
+    return rax;
+}
+
+void xlat_fuzzing(void) {
+    u64 cpuid_xlat = 0x0be0;
+    u64 pause_xlat = 0x0bf0;
+    persistent_trace(pause_xlat);
+    u64 val = try_xlat(0xdeaddeaddeaddeadLL);
+    printf("val: 0x%lx\n", val);
+}
+
 
 // initialize the argp struct. Which will be used to parse and use the args.
 static struct argp argp = {options, parse_opt, args_doc, doc};
@@ -242,6 +339,7 @@ int main(int argc, char* argv[]) {
         printf("\tverbose:       %d\n", arguments.verbose);
         printf("\treset:         %d\n", arguments.reset);
         printf("\tcpuid:         %d\n", arguments.cpuid);
+        printf("\txlat:          %d\n", arguments.xlat);
         printf("\ttrace_addr:    0x%x\n", (u32)arguments.trace_addr);
         printf("\twait:          %d\n", arguments.wait);
         printf("\tarray:         %d\n", arguments.array);
@@ -261,6 +359,10 @@ int main(int argc, char* argv[]) {
     if (arguments.reset) { // Reset match and patch
         init_match_and_patch();
         do_fix_IN_patch();
+    }
+
+    if (arguments.xlat) {
+        xlat_fuzzing();
     }
 
     if (arguments.trace_addr > -1) { // Do trace
@@ -285,7 +387,7 @@ int main(int argc, char* argv[]) {
 
         if (verbose) {
             cpuinfo_res result = cpuinfo(0x80000002);
-            printf("cpuinfo: %08x %08x %08x %08x\n", result.rax, result.rbx, result.rcx, result.rdx);
+            printf("cpuinfo: 0x%016lx 0x%016lx 0x%016lx 0x%016lx\n", result.rax, result.rbx, result.rcx, result.rdx);
         }
     }
     

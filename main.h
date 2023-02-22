@@ -219,8 +219,6 @@ SA_STATUS static inline sa_write_opcode(SA_ADDR addr, SA_VALUE value, uint32_t o
     return (SA_STATUS)udbgwr(0xC8, addr, (uint64_t)value | ((uint64_t)opcode << 32)).status;
 }
 
-
-
 u64 parity0(u64 value) {
     u64 parity = 0;
     while (value) {
@@ -392,7 +390,7 @@ void ms_patch_ram_dump(void){
 }
 
 void uram_dump(void) {
-    for (u64 i = 0; i < 0x200; i++) {
+    for (u64 i = 0; i < 0x200; i += 4) {
         u64 val0 = uram_read(i);
         u64 val1 = uram_read(i+1);
         u64 val2 = uram_read(i+2);
