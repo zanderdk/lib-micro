@@ -93,8 +93,9 @@ void do_cpuid_patch() {
     hook_match_and_patch(0, hook_address, addr);
 }
 
-void install_jump_target(void) {
+void install_jump_target(u64 uaddr) {
     #include "ucode/jump_target.h"
+    staging_write(0xba40, uaddr);
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
@@ -103,7 +104,7 @@ void install_jump_target(void) {
 }
 
 void persistent_trace(u64 hook_address) {
-    install_jump_target();
+    install_jump_target(hook_address);
     u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & 0x3FFFFFFFFFFFLU;
     u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & 0x3FFFFFFFFFFFLU;
     u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & 0x3FFFFFFFFFFFLU;
@@ -295,25 +296,32 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
 }
 
 __attribute__((always_inline))
-uint64_t static inline try_xlat(u64 addr) {
-    u64 rax = addr;
+cpuinfo_res static inline try_xlat(u64 addr) {
+    u64 rax = 0xdeaddeaddeaddead;
+    cpuinfo_res result;
     lmfence();
     asm volatile(
-        "pause\n\t" //TODO fuzz this one
-        : "+a" (rax)
-        :
-        : "rbx", "rdx", "rdi", "rsi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+        "pause\n\t"
+        : "=a" (result.rax)
+        , "=b" (result.rbx)
+        , "=c" (result.rcx)
+        , "=d" (result.rdx)
+        : "a" (rax)
+        : "rdi", "rsi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
     );
     lmfence();
-    return rax;
+    return result;
 }
 
 void xlat_fuzzing(void) {
     u64 cpuid_xlat = 0x0be0;
     u64 pause_xlat = 0x0bf0;
     persistent_trace(pause_xlat);
-    u64 val = try_xlat(0xdeaddeaddeaddeadLL);
-    printf("val: 0x%lx\n", val);
+    cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadLL);
+    printf("rax:        0x%lx\n", val.rax);
+    printf("rbx:        0x%lx\n", val.rbx);
+    printf("rcx:        0x%lx\n", val.rcx);
+    printf("rbx:        0x%lx\n", val.rdx);
 }
 
 
