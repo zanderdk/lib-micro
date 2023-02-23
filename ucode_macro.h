@@ -38,10 +38,10 @@ static inline u64 parity1(u64 value) {
 #define CRC_SEQ_MASK 0xFFFFFFFLU
 
 #define IMM_ENCODE_SRC0(src0_id) \
-    ((src0_id & 0xff) << 24) | ((src0_id & 0x1f00)<< 10) | ((src0_id & 0xe000) >> 13) | (1 << 3)
+    ((src0_id & 0xffUL) << 24) | ((src0_id & 0x1f00)<< 10) | ((src0_id & 0xe000) >> 13) | (1 << 3)
 
 #define IMM_ENCODE_SRC1(src1_id) \
-    ((src1_id & 0xff) << 24) | ((src1_id & 0x1f00)<< 10) | ((src1_id & 0xe000) >> 7) | (1 << 9)
+    ((src1_id & 0xffUL) << 24) | ((src1_id & 0x1f00)<< 10) | ((src1_id & 0xe000) >> 7) | (1 << 9)
 
 #define SRC0_ENCODE(val) \
     ((val & 0x3f) << 0)
@@ -66,7 +66,6 @@ static inline u64 parity1(u64 value) {
 #define MOVE_DSZ64(dst) \
     ( _MOVE_DSZ64 | DST_ENCODE(dst) )
 
-
 #define MOVEFROMCREG_DSZ64(dst) \
     ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) )
 
@@ -87,6 +86,9 @@ static inline u64 parity1(u64 value) {
     CRC_UOP( MOVE_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 // uram/stagingbuf to reg
+
+#define READURAM(dst, imm) \
+    ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
     CRC_UOP( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )

@@ -89,17 +89,14 @@ void do_cpuid_patch() {
 }
 
 void install_jump_target(u64 uaddr) {
-    u64 shit = LDZX_DSZ64_ASZ32_SC1(RDX, 0x0UL, RSI, 0x18UL);
-    printf("LDZX_DSZ16_ASZ32_SC1(RDX, SS, rsp, 0x1a) -> %012lx\n", shit);
-
-    /* u64 shit = LDZX_DSZN_ASZ32_SC1(RDX, RSI, 0x1aUL); */
-    /* printf("LDZX_DSZN_ASZ32_SC1(TMP0, RSI, mode) -> %012lx\n", shit); */
+    u64 shit  = LDZX_DSZ64_ASZ32_SC1(RDX, 0x0UL, RSI, 0x18UL);
+    u64 shit2 = READURAM(RCX, 0x0060);
 
     unsigned long addr = 0x7d00;
     unsigned long ucode_patch[][4] = {
         {MOVEFROMCREG_DSZ64_REG(RAX, 0x67),
          LDSTGBUF_DSZ64_ASZ16_SC1_REG(RCX, 0xba40),
-         shit, END_SEQWORD},
+         shit2, END_SEQWORD},
     };
     /* #include "ucode/jump_target.h" */
     staging_write(0xba40, uaddr);
