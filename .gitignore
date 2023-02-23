@@ -2,3 +2,4 @@ main
 main.O
 ucode/*.h
 compile_commands.json
+alu_ops.h

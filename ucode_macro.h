@@ -77,10 +77,25 @@ static inline u64 parity1(u64 value) {
 #define MOVEFROMCREG_DSZ64_REG(dst, crreg)             \
     CRC_UOP( MOVEFROMCREG_DSZ64(dst) | IMM_ENCODE_SRC1( (crreg) ))
 
+#define MOVETOCREG_DSZ64(dst, crreg)             \
+    CRC_UOP( _MOVETOCREG_DSZ64 | SRC0_ENCODE( (reg) ) | IMM_ENCODE_SRC1( (crreg) ))
+
 #define MOVE_DSZ64_REG(dst, reg)                                           \
     CRC_UOP( MOVE_DSZ64(dst) | SRC0_ENCODE( (reg) ) | SRC1_ENCODE( (reg) ) )
 
 // imm to reg
+
+#define ZEROEXT_DSZ64(dst, imm) \
+    CRC_UOP( _ZEROEXT_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
+
+#define ZEROEXT_DSZ32(dst, imm) \
+    CRC_UOP( _ZEROEXT_DSZ32(dst) | IMM_ENCODE_SRC0( (imm) ))
+
+#define ZEROEXT_DSZ16(dst, imm) \
+    CRC_UOP( _ZEROEXT_DSZ16(dst) | IMM_ENCODE_SRC0( (imm) ))
+
+#define ZEROEXT_DSZ8(dst, imm) \
+    CRC_UOP( _ZEROEXT_DSZ8(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 #define MOVE_DSZ64_IMM(dst, imm)                                           \
     CRC_UOP( MOVE_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))

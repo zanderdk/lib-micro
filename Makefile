@@ -20,7 +20,7 @@ build-ucode: $(U_HEADERS)
 build: $(TARGET)
 
 # yee not the pretiest but easy as hell
-alu_ops.h:
+alu_ops.h: gen_inst.py
 	python gen_inst.py > alu_ops.h
 
 $(TARGET): build-ucode alu_ops.h

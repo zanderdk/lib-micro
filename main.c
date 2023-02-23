@@ -91,7 +91,8 @@ void do_cpuid_patch() {
 void install_jump_target(u64 uaddr) {
     u64 ram_addr = 0xba00;
     u64 shit = XOR_DSZ64_REG(RAX, RAX, TMP0);
-    printf("shit: %012lx\n", shit);
+    u64 shit2 = UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, 0x7d00);
+    printf("shit: %012lx\n", shit2);
 
     unsigned long addr = 0x7d00;
     unsigned long ucode_patch[][4] = {
@@ -132,17 +133,17 @@ void persistent_trace(u64 hook_address) {
     unsigned long addr = 0x7c10;
     unsigned long ucode_patch[][4] = {
         // U7c10: WRITEURAM(tmp0, 0x01a0, 64); tmp0:= MOVE_DSZ64(0xdead); tmp0:= SHL_DSZ64(tmp0, 0x10)
-        {0x8043a0040230, 0x8049ad7b000e, 0x406410030230, 0x300000c0},
+        {WRITEURAM(TMP0, 0x1a0), MOVE_DSZ64_IMM(TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), NOP_SEQWORD},
         // U7c14: tmp0:= OR_DSZ64(tmp0, 0xdead); tmp0:= SHL_DSZ64(tmp0, 0x10); tmp0:= OR_DSZ64(tmp0, 0xdead)
-        {0xc041ad7b03b0, 0x406410030230, 0xc041ad7b03b0, 0x300000c0},
+        {OR_DSZ64_IMM(TMP0, TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), NOP_SEQWORD},
         // U7c18: tmp0:= SHL_DSZ64(tmp0, 0x10); tmp0:= OR_DSZ64(tmp0, 0xdead); tmp0:= XOR_DSZ64(tmp0, rax)
-        {0x406410030230, 0xc041ad7b03b0, 0x4600030830, 0x300000c0},
+        {SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), XOR_DSZ64_REG(TMP0, TMP0, RAX), NOP_SEQWORD},
         // U7c1c: UJMPCC_DIRECT_NOTTAKEN_CONDZ(tmp0, 0x7d00); tmp0:= READURAM( , 0x01a0, 64); NOP
-        {0x150007402f0, 0x63a0070200, 0x0, 0x300000c0},
+        {UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, 0x7d00), READURAM(TMP0, 0x1a0), NOP, NOP_SEQWORD},
         // U7c20: orig uops
         {uop0, uop1, uop2, seq},
         // U7c24: UJMP(, hook_address); NOP; NOP
-        {UJMP(hook_address+4), 0x0, 0x0, 0x300000c0}
+        {UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD}
     };
 
     if (verbose) {

@@ -37,6 +37,8 @@
 #define R64SRC 2UL
 #define R64BASE 4UL
 
+#define NOP (0x0)
+
 #define _ADD_DSZ32 (0x000UL << 32)
 #define _OR_DSZ32 (0x001UL << 32)
 #define _AND_DSZ32 (0x004UL << 32)
