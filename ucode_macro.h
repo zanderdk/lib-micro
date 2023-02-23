@@ -91,11 +91,14 @@ static inline u64 parity1(u64 value) {
     CRC_UOP( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
 //TODO: cant write higer than 0x8c have no idea why
-#define WRITEURAM(src, imm) \
-    CRC_UOP( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(imm) )
+#define WRITEURAM(src, off) \
+    CRC_UOP( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(off) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
     CRC_UOP( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
+
+#define STADSTGBUF_DSZ64_ASZ16_SC1_REG(src, off)             \
+    CRC_UOP( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(off) | MOD2 )
 
 //real_ram to reg
 
