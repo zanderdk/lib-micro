@@ -19,7 +19,11 @@ build-ucode: $(U_HEADERS)
 
 build: $(TARGET)
 
-$(TARGET): build-ucode
+# yee not the pretiest but easy as hell
+alu_ops.h:
+	python gen_inst.py > alu_ops.h
+
+$(TARGET): build-ucode alu_ops.h
 	$(CC) $(CFLAGS) $(SOURCES) $(LIBS) -o $@
 
 clean:

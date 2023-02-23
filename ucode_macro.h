@@ -100,7 +100,7 @@ static inline u64 parity1(u64 value) {
 #define STADSTGBUF_DSZ64_ASZ16_SC1_REG(src, off)             \
     CRC_UOP( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(off) | MOD2 )
 
-//real_ram to reg
+//normal ram to reg
 
 /**
  * somehow mode is related to segment selector mode 0x0a and 0x1a is good for rsp and SS stuff
@@ -114,17 +114,35 @@ static inline u64 parity1(u64 value) {
 /* mode = (uop & 0x7c0000) >> 18 */
 /* seg_sel = (uop & 0x003000000000) >> 36 */
 
-#define LDZX_DSZ16_ASZ32_SC1(dst, seg, src, mode) \
-    CRC_UOP( _LDZX_DSZ16_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+#define LDZX_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
+    CRC_UOP( _LDZX_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define LDZX_DSZ32_ASZ32_SC1(dst, seg, src, mode) \
     CRC_UOP( _LDZX_DSZ32_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
-#define LDZX_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
-    CRC_UOP( _LDZX_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+#define LDZX_DSZ16_ASZ32_SC1(dst, seg, src, mode) \
+    CRC_UOP( _LDZX_DSZ16_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
-//only mode is wacked encoded
+#define LDZX_DSZ8_ASZ32_SC1(dst, seg, src, mode) \
+    CRC_UOP( _LDZX_DSZ8_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+
+// write normal ram
+#define STAD_DSZ64_ASZ32_SC1(src2, seg, src, mode) \
+    CRC_UOP( _STAD_DSZ64_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+
+#define STAD_DSZ32_ASZ32_SC1(src2, seg, src, mode) \
+    CRC_UOP( _STAD_DSZ32_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+
+#define STAD_DSZ16_ASZ32_SC1(src2, seg, src, mode) \
+    CRC_UOP( _STAD_DSZ16_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+
+#define STAD_DSZ8_ASZ32_SC1(src2, seg, src, mode) \
+    CRC_UOP( _STAD_DSZ8_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+
+//this mode has a wacked encoding and not sure 100p working
 #define LDZX_DSZN_ASZ32_SC1(dst, src, mode) \
     CRC_UOP( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
+
+#include "alu_ops.h"
 
 #endif // UCODE_MACRO_H_
