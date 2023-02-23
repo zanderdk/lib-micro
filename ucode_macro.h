@@ -88,7 +88,7 @@ static inline u64 parity1(u64 value) {
 // uram/stagingbuf to reg
 
 #define READURAM(dst, imm) \
-    ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
+    CRC_UOP( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
     CRC_UOP( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
@@ -108,17 +108,16 @@ static inline u64 parity1(u64 value) {
 /* seg_sel = (uop & 0x003000000000) >> 36 */
 
 #define LDZX_DSZ16_ASZ32_SC1(dst, seg, src, mode) \
-    ( _LDZX_DSZ16_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    CRC_UOP( _LDZX_DSZ16_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
-//TODO: for some reason this thing is brokey but 16 and 64 works great
 #define LDZX_DSZ32_ASZ32_SC1(dst, seg, src, mode) \
-    ( _LDZX_DSZ32_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    CRC_UOP( _LDZX_DSZ32_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define LDZX_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
-    ( _LDZX_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    CRC_UOP( _LDZX_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 //only mode is wacked encoded
 #define LDZX_DSZN_ASZ32_SC1(dst, src, mode) \
-    ( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
+    CRC_UOP( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
 
 #endif // UCODE_MACRO_H_
