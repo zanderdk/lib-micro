@@ -56,7 +56,7 @@ static inline u64 parity1(u64 value) {
     (( (seq) & CRC_SEQ_MASK) | ((parity0(seq) << 28) | (parity1(seq) << 29)))
 
 #define CRC_UOP(uop) \
-    (( (uop) & CRC_UOP_MASK) | (parity1(uop) << 45) | (parity0(uop) << 46))
+    (( (uop) & CRC_UOP_MASK) | (parity1(uop) << 47) | (parity0(uop) << 46))
 
 #define UJMP(uaddr) \
     CRC_UOP(_UJMP | IMM_ENCODE_SRC1( (uaddr) ))
@@ -89,6 +89,10 @@ static inline u64 parity1(u64 value) {
 
 #define READURAM(dst, imm) \
     CRC_UOP( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
+
+//TODO: cant write higer than 0x8c have no idea why
+#define WRITEURAM(src, imm) \
+    CRC_UOP( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(imm) )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
     CRC_UOP( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )

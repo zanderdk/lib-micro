@@ -371,7 +371,7 @@ void ms_patch_ram_dump(void){
 }
 
 void uram_dump(void) {
-    for (u64 i = 0; i < 0x200; i += 4) {
+    for (u64 i = 0; i < 0x100; i += 4) {
         u64 val0 = uram_read(i);
         u64 val1 = uram_read(i+1);
         u64 val2 = uram_read(i+2);
