@@ -1,6 +1,42 @@
 #ifndef OPCODE_H_
 #define OPCODE_H_
 
+#define RAX 32UL
+#define RCX 33UL
+#define RDX 34UL
+#define RBX 35UL
+#define RSP 36UL
+#define RBP 37UL
+#define RSI 38UL
+#define RDI 39UL
+#define R8 40UL
+#define R9 41UL
+#define R10 42UL
+#define R11 43UL
+#define R12 44UL
+#define R13 45UL
+#define R14 46UL
+#define R15 47UL
+#define TMP0 48UL
+#define TMP1 49UL
+#define TMP2 50UL
+#define TMP3 51UL
+#define TMP4 52UL
+#define TMP5 53UL
+#define TMP6 54UL
+#define TMP7 55UL
+#define TMP8 56UL
+#define TMP9 57UL
+#define TMP10 58UL
+#define TMP11 59UL
+#define TMP12 60UL
+#define TMP13 61UL
+#define TMP14 62UL
+#define TMP15 63UL
+#define R64DST 1UL
+#define R64SRC 2UL
+#define R64BASE 4UL
+
 #define _ADD_DSZ32 (0x000UL << 32)
 #define _OR_DSZ32 (0x001UL << 32)
 #define _AND_DSZ32 (0x004UL << 32)
@@ -44,7 +80,7 @@
 #define _XOR_DSZ64 (0x046UL << 32)
 #define _NOTAND_DSZ64 (0x047UL << 32)
 #define _ZEROEXT_DSZ64 (0x048UL << 32)
-#define _MOVE_DSZ64 (0x049UL << 32)
+#define _MOVE_DSZ64 (0x049UL << 32) //TODO: think issues with this one
 /* #define _TESTUSTATE (0x04aUL << 32) */
 /* #define _SAVEUIP (0x04cUL << 32) */
 #define _UJMPCC_DIRECT_NOTTAKEN_CONDO (0x050UL << 32)
@@ -443,7 +479,7 @@
 /* #define _STADTICKLE_DSZ64_ASZ32_SC1 (0xc79UL << 32) */
 /* #define _LDTICKLE_DSZ64_ASZ32_SC1 (0xc7aUL << 32) */
 /* #define _WRSEGFLD (0xc7bUL << 32) */
-#define _LDZX_DSZ16_ASZ32_SC1 (0xc80UL << 32)
+/* #define _LDZX_DSZ16_ASZ32_SC1 (0xc80UL << 32) */
 #define _LEA_DSZ16_ASZ32_SC1 (0xc83UL << 32)
 #define _STAD_DSZ16_ASZ32_SC1 (0xc88UL << 32)
 #define _STADTICKLE_DSZ16_ASZ32_SC1 (0xc89UL << 32)
@@ -453,7 +489,7 @@
 /* #define _STAD_DSZ16_ASZ32_SC1 (0xc98UL << 32) */
 /* #define _STADTICKLE_DSZ16_ASZ32_SC1 (0xc99UL << 32) */
 /* #define _LDTICKLE_DSZ16_ASZ32_SC1 (0xc9aUL << 32) */
-/* #define _LDZX_DSZ16_ASZ32_SC1 (0xcb0UL << 32) */
+#define _LDZX_DSZ16_ASZ32_SC1 (0xcb0UL << 32)
 /* #define _LEA_DSZ16_ASZ32_SC1 (0xcb3UL << 32) */
 /* #define _STAD_DSZ16_ASZ32_SC1 (0xcb8UL << 32) */
 /* #define _STADTICKLE_DSZ16_ASZ32_SC1 (0xcb9UL << 32) */
@@ -645,5 +681,9 @@
 #define _STADPPHYS_DSZ8_ASZ32_SC8 (0xff8UL << 32)
 /* #define _LDPPHYS_DSZ8_ASZ32_SC8 (0xffaUL << 32) */
 #define _SFENCE (0xfffUL << 32)
+
+
+// custom shit
+#define _DZX_DSZN_ASZ32_SC1 _LDZX_DSZ32_ASZ32_SC1
 
 #endif // OPCODE_H_

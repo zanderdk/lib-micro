@@ -4,7 +4,6 @@
 #include<argp.h>
 #include <string.h>
 
-#include "opcode.h"
 #include "ucode_macro.h"
 
 u8 verbose = 0;
@@ -90,7 +89,19 @@ void do_cpuid_patch() {
 }
 
 void install_jump_target(u64 uaddr) {
-    #include "ucode/jump_target.h"
+    u64 shit = LDZX_DSZ64_ASZ32_SC1(RDX, 0x0UL, RSI, 0x18UL);
+    printf("LDZX_DSZ16_ASZ32_SC1(RDX, SS, rsp, 0x1a) -> %012lx\n", shit);
+
+    /* u64 shit = LDZX_DSZN_ASZ32_SC1(RDX, RSI, 0x1aUL); */
+    /* printf("LDZX_DSZN_ASZ32_SC1(TMP0, RSI, mode) -> %012lx\n", shit); */
+
+    unsigned long addr = 0x7d00;
+    unsigned long ucode_patch[][4] = {
+        {MOVEFROMCREG_DSZ64_REG(RAX, 0x67),
+         LDSTGBUF_DSZ64_ASZ16_SC1_REG(RCX, 0xba40),
+         shit, END_SEQWORD},
+    };
+    /* #include "ucode/jump_target.h" */
     staging_write(0xba40, uaddr);
     staging_write(0xba80, 0xcafebabe);
     if (verbose)
@@ -180,9 +191,10 @@ typedef struct {
     u64 rdx;
 } cpuinfo_res;
 
+
 __attribute__((always_inline))
 cpuinfo_res static inline cpuinfo(u64 arg1) {
-    u64 rax = arg1;
+    volatile u64 rax = arg1;
     cpuinfo_res result;
     lmfence();
     asm volatile(
@@ -284,19 +296,23 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
     return 0;
 }
 
+u64 mother_fucker = 0x12341234cafebabe;
+
 __attribute__((always_inline))
 cpuinfo_res static inline try_xlat(u64 val) {
     u64 rax = val;
+    volatile u64 rsi = (u64) &mother_fucker;
     cpuinfo_res result;
     lmfence();
     asm volatile(
-        "iretq\n\t"
+        "pause\n\t"
         : "=a" (result.rax)
         , "=b" (result.rbx)
         , "=c" (result.rcx)
         , "=d" (result.rdx)
+        , "+rsi" (rsi)
         : "a" (rax)
-        : "rdi", "rsi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+        : "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
     );
     lmfence();
     return result;
@@ -306,12 +322,12 @@ void xlat_fuzzing(void) {
     u64 cpuid_xlat = 0x0be0;
     u64 pause_xlat = 0x0bf0;
     u64 iret_xlat = 0x07c8;
-    persistent_trace(iret_xlat);
+    persistent_trace(pause_xlat);
     cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
     printf("rcx:        0x%lx\n", val.rcx);
-    printf("rbx:        0x%lx\n", val.rdx);
+    printf("rdx:        0x%lx\n", val.rdx);
 }
 
 
