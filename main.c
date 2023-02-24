@@ -25,11 +25,11 @@ static inline void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) 
     // uop3 is fixed to a nop and cannot be overridden
     for (int i = 0; i < n; i++) {
         // patch ucode
-        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4),   ucode_patch[i][0]);
-        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+1, ucode_patch[i][1]);
-        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+2, ucode_patch[i][2]);
+        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+0, CRC_UOP(ucode_patch[i][0]));
+        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+1, CRC_UOP(ucode_patch[i][1]));
+        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+2, CRC_UOP(ucode_patch[i][2]));
         // patch seqword
-        ms_const_write(ucode_addr_to_patch_seqword_addr(addr) + i, ucode_patch[i][3]);
+        ms_const_write(ucode_addr_to_patch_seqword_addr(addr) + i, CRC_SEQ(ucode_patch[i][3]));
     }
 }
 
@@ -88,30 +88,26 @@ void do_cpuid_patch() {
     hook_match_and_patch(0, hook_address, addr);
 }
 
+/* U39d4: 100a00200200                 TESTUSTATE(SYS, 0x0800) */
+/*            02a7ee31                 ? SEQW GOTO U27ee */
+/* U39d5: 125600000000     LFNCEWAIT-> unk_256(0x00000000) */
+/*            02a7ee31                 SEQW UEND0 */
+
 void install_jump_target(u64 uaddr) {
     u64 ram_addr = 0xba00;
-    u64 shit1 = WRMSLOOPCTRFBR(5);
-    u64 shit2 = TESTUSTATE_MSLOOP;
-    u64 seq = SEQ_GOTO_END1(0x7d04);
-    printf("shit1: %012lx\n", shit1);
-    printf("shit2: %012lx\n", shit2);
-    printf("seq  : %012lx\n", seq);
 
     unsigned long addr = 0x7d00;
     unsigned long ucode_patch[][4] = {
     { //0x7d00
         MOVE_DSZ64_IMM(RAX, 0),
-        shit1,
+        WRMSLOOPCTRFBR(5),
         NOP, NOP_SEQWORD
     },
-    { //0x7d08
+    { //0x7d04
         ADD_DSZ64_IMM(RAX, RAX, 1),
-        shit2,
+        TESTUSTATE_MSLOOP,
         NOP,
-        seq,
-    },
-    { //0x7d0c
-        NOP, NOP, NOP, END_SEQWORD
+        SEQ_GOTO1(0x7d04) | SEQ_UEND0_2,
     }
     };
     /* #include "ucode/jump_target.h" */

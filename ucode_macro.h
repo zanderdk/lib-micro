@@ -55,7 +55,7 @@ static inline unsigned long long parity1(unsigned long long value) {
     (( (uop) & CRC_UOP_MASK) | (parity0(uop) << 46) | (parity1(uop) << 47))
 
 #define UJMP(uaddr) \
-    CRC_UOP(_UJMP | IMM_ENCODE_SRC1( (uaddr) ))
+    (_UJMP | IMM_ENCODE_SRC1( (uaddr) ))
 
 // generic moves
 
@@ -71,45 +71,45 @@ static inline unsigned long long parity1(unsigned long long value) {
 // reg to reg
 
 #define MOVEFROMCREG_DSZ64_REG(dst, crreg)             \
-    CRC_UOP( MOVEFROMCREG_DSZ64(dst) | IMM_ENCODE_SRC1( (crreg) ))
+    ( MOVEFROMCREG_DSZ64(dst) | IMM_ENCODE_SRC1( (crreg) ))
 
 #define MOVETOCREG_DSZ64(dst, crreg)             \
-    CRC_UOP( _MOVETOCREG_DSZ64 | SRC0_ENCODE( (reg) ) | IMM_ENCODE_SRC1( (crreg) ))
+    ( _MOVETOCREG_DSZ64 | SRC0_ENCODE( (reg) ) | IMM_ENCODE_SRC1( (crreg) ))
 
 #define MOVE_DSZ64_REG(dst, reg)                                           \
-    CRC_UOP( MOVE_DSZ64(dst) | SRC0_ENCODE( (reg) ) | SRC1_ENCODE( (reg) ) )
+    ( MOVE_DSZ64(dst) | SRC0_ENCODE( (reg) ) | SRC1_ENCODE( (reg) ) )
 
 // imm to reg
 
 #define ZEROEXT_DSZ64(dst, imm) \
-    CRC_UOP( _ZEROEXT_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 #define ZEROEXT_DSZ32(dst, imm) \
-    CRC_UOP( _ZEROEXT_DSZ32(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ32(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 #define ZEROEXT_DSZ16(dst, imm) \
-    CRC_UOP( _ZEROEXT_DSZ16(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ16(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 #define ZEROEXT_DSZ8(dst, imm) \
-    CRC_UOP( _ZEROEXT_DSZ8(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ8(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 #define MOVE_DSZ64_IMM(dst, imm)                                           \
-    CRC_UOP( MOVE_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( MOVE_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 // uram/stagingbuf to reg
 
 #define READURAM(dst, imm) \
-    CRC_UOP( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
+    ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
 //TODO: cant write higer than 0x8c have no idea why
 #define WRITEURAM(src, off) \
-    CRC_UOP( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(off) | MOD2 )
+    ( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(off) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
-    CRC_UOP( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
+    ( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
 
 #define STADSTGBUF_DSZ64_ASZ16_SC1_REG(src, off)             \
-    CRC_UOP( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(off) | MOD2 )
+    ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(off) | MOD2 )
 
 //normal ram to reg
 
@@ -126,67 +126,67 @@ static inline unsigned long long parity1(unsigned long long value) {
 /* seg_sel = (uop & 0x003000000000) >> 36 */
 
 #define LDZX_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
-    CRC_UOP( _LDZX_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _LDZX_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define LDZX_DSZ32_ASZ32_SC1(dst, seg, src, mode) \
-    CRC_UOP( _LDZX_DSZ32_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _LDZX_DSZ32_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define LDZX_DSZ16_ASZ32_SC1(dst, seg, src, mode) \
-    CRC_UOP( _LDZX_DSZ16_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _LDZX_DSZ16_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define LDZX_DSZ8_ASZ32_SC1(dst, seg, src, mode) \
-    CRC_UOP( _LDZX_DSZ8_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _LDZX_DSZ8_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 // write normal ram
 #define STAD_DSZ64_ASZ32_SC1(src2, seg, src, mode) \
-    CRC_UOP( _STAD_DSZ64_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _STAD_DSZ64_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define STAD_DSZ32_ASZ32_SC1(src2, seg, src, mode) \
-    CRC_UOP( _STAD_DSZ32_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _STAD_DSZ32_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define STAD_DSZ16_ASZ32_SC1(src2, seg, src, mode) \
-    CRC_UOP( _STAD_DSZ16_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _STAD_DSZ16_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 #define STAD_DSZ8_ASZ32_SC1(src2, seg, src, mode) \
-    CRC_UOP( _STAD_DSZ8_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+    ( _STAD_DSZ8_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
 //this mode has a wacked encoding and not sure 100p working
 #define LDZX_DSZN_ASZ32_SC1(dst, src, mode) \
-    CRC_UOP( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
+    ( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
 
 #include "alu_ops.h"
 
 #define SAVEUIP0(addr) \
-    CRC_UOP( _SAVEUIP | SRC0_ENCODE(0) | IMM_ENCODE_SRC0(addr) )
+    ( _SAVEUIP | SRC0_ENCODE(0) | IMM_ENCODE_SRC0(addr) )
 
 #define SAVEUIP1(addr) \
-    CRC_UOP( _SAVEUIP | SRC0_ENCODE(1) | IMM_ENCODE_SRC0(addr) )
+    ( _SAVEUIP | SRC0_ENCODE(1) | IMM_ENCODE_SRC0(addr) )
 
 #define UST_MSLOOPCTR_NONZERO 1
 
 #define WRMSLOOPCTRFBR(x) \
-    CRC_UOP( _WRMSLOOPCTRFBR | IMM_ENCODE_SRC1(x) )
+    ( _WRMSLOOPCTRFBR | IMM_ENCODE_SRC1(x) )
 
 #define TESTUSTATE_UCODE(testbits)        \
-    CRC_UOP( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) )
+    ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) )
 
 #define TESTUSTATE_SYS(testbits)        \
-    CRC_UOP( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 )
 
 #define TESTUSTATE_VMX(testbits)        \
-    CRC_UOP( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD2 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD2 )
 
 #define TESTUSTATE_UCODE_NOT(testbits)        \
-    CRC_UOP( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD0 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD0 )
 
 #define TESTUSTATE_SYS_NOT(testbits)        \
-    CRC_UOP( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD0 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD0 )
 
 #define TESTUSTATE_VMX_NOT(testbits)        \
-    CRC_UOP( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD2 | MOD0 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD2 | MOD0 )
 
 #define TESTUSTATE_MSLOOP \
-    CRC_UOP( TESTUSTATE_UCODE(1) )
+    ( TESTUSTATE_UCODE(1) )
 
 #define SEQ_UADDR(addr) \
     ( (addr & 0x7fffUL) << 8 )
@@ -202,19 +202,19 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define SEQ_CTRL1  ( SEQ_UP0(1) )
 #define SEQ_CTRL2  ( SEQ_UP0(2) )
 
-#define SEQ_END0  ( SEQ_UP1(0) )
-#define SEQ_END1  ( SEQ_UP1(1) )
-#define SEQ_END2  ( SEQ_UP1(2) )
+/* #define SEQ_END0  ( SEQ_UP1(0) ) */
+/* #define SEQ_END1  ( SEQ_UP1(1) ) */
+/* #define SEQ_END2  ( SEQ_UP1(2) ) */
 
-#define SEQ_SYNC0  ( SEQ_UP1(0) )
+#define SEQ_SYNC0  ( SEQ_UP2(0) )
 #define SEQ_SYNC1  ( SEQ_UP2(1) )
 #define SEQ_SYNC2  ( SEQ_UP2(2) )
 
 #define NO_SYNC SEQ_UP2(3)
 
 //CTRL idx controls URET UEND USAVEUIP
-//CTRL idx controls URET UEND USAVEUIP
 //END idx controls GOTO
+//SYNC idx controls sync doh
 
 #define SEQ_SEQUENTIAL (SEQ_SYNC(0))
 
@@ -231,25 +231,57 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define SEQ_MSLOOP     (SEQ_EFLOW(9))
 #define SEQ_MSSTOP     (SEQ_EFLOW(0xb))
 
+#define SEQ_GOTO0(addr) \
+    ( SEQ_CTRL0 | SEQ_UP1(0) | NO_SYNC | SEQ_UADDR(addr) )
+
+#define SEQ_GOTO1(addr) \
+    ( SEQ_CTRL0 | SEQ_UP1(1) | NO_SYNC | SEQ_UADDR(addr) )
+
+#define SEQ_GOTO2(addr) \
+    ( SEQ_CTRL0 | SEQ_UP1(2) | NO_SYNC | SEQ_UADDR(addr) )
+
+#define SEQ_UEND0(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xc) | SEQ_SYNC(1) )
+
+#define SEQ_UEND1(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xd) | SEQ_SYNC(1) )
+
+#define SEQ_UEND3(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xe) | SEQ_SYNC(1) )
+
+#define SEQ_UEND4(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) | SEQ_SYNC(1) )
+
+#define SEQ_UEND0_0 \
+    ( SEQ_UEND0(0) )
+
+#define SEQ_UEND0_1 \
+    ( SEQ_UEND0(1) )
+
+#define SEQ_UEND0_2 \
+    ( SEQ_UEND0(2) )
+
+#define SEQ_URET0_0 \
+    ( SEQ_UP0(0) | SEQ_EFLOW(0x2) | SEQ_SYNC(1) )
+
+#define SEQ_URET0_1 \
+    ( SEQ_UP0(1) | SEQ_EFLOW(0x2) | SEQ_SYNC(1) )
+
+#define SEQ_URET0_2 \
+    ( SEQ_UP0(2) | SEQ_EFLOW(0x2) | SEQ_SYNC(1) )
+
+#define SEQ_URET1_0 \
+    ( SEQ_UP0(0) | SEQ_EFLOW(0x3) | SEQ_SYNC(1) )
+
+#define SEQ_URET1_1 \
+    ( SEQ_UP0(1) | SEQ_EFLOW(0x3) | SEQ_SYNC(1) )
+
+#define SEQ_URET1_2 \
+    ( SEQ_UP0(2) | SEQ_EFLOW(0x3) | SEQ_SYNC(1) )
+
 #define NOP_SEQWORD (0x0000300000c0uL)
 #define END_SEQWORD (0x130000f2)
 
 #define END_UNKOWN_UOP (0x125600000000uL)
-
-#define SEQ_GOTO_END0(addr) \
-    CRC_SEQ( SEQ_CTRL0 | SEQ_END0 | NO_SYNC | SEQ_UADDR(addr) )
-
-#define SEQ_GOTO_END1(addr) \
-    CRC_SEQ( SEQ_CTRL0 | SEQ_END1 | NO_SYNC | SEQ_UADDR(addr) )
-
-#define SEQ_GOTO_END2(addr) \
-    CRC_SEQ( SEQ_CTRL0 | SEQ_END2 | NO_SYNC | SEQ_UADDR(addr) )
-
-/* #define SEQ_URET0 0x01d7c188 */ //missing up1 idx info
-/* #define SEQ_URET1 0x070000ce */
-
-/* #define URET0 0x014800000000 */
-/* #define URET1 0x014800800000 */
-
 
 #endif // UCODE_MACRO_H_
