@@ -90,15 +90,29 @@ void do_cpuid_patch() {
 
 void install_jump_target(u64 uaddr) {
     u64 ram_addr = 0xba00;
-    u64 shit = XOR_DSZ64_REG(RAX, RAX, TMP0);
-    u64 shit2 = UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, 0x7d00);
-    printf("shit: %012lx\n", shit2);
+    u64 shit1 = WRMSLOOPCTRFBR(5);
+    u64 shit2 = TESTUSTATE_MSLOOP;
+    u64 seq = SEQ_GOTO_END1(0x7d04);
+    printf("shit1: %012lx\n", shit1);
+    printf("shit2: %012lx\n", shit2);
+    printf("seq  : %012lx\n", seq);
 
     unsigned long addr = 0x7d00;
     unsigned long ucode_patch[][4] = {
-        {MOVE_DSZ64_IMM(RAX, 0x1338),
-         MOVE_DSZ64_IMM(TMP0, 0x1337),
-         shit, END_SEQWORD},
+    { //0x7d00
+        MOVE_DSZ64_IMM(RAX, 0),
+        shit1,
+        NOP, NOP_SEQWORD
+    },
+    { //0x7d08
+        ADD_DSZ64_IMM(RAX, RAX, 1),
+        shit2,
+        NOP,
+        seq,
+    },
+    { //0x7d0c
+        NOP, NOP, NOP, END_SEQWORD
+    }
     };
     /* #include "ucode/jump_target.h" */
     staging_write(0xba40, uaddr);
