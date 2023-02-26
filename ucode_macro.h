@@ -167,6 +167,9 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define WRMSLOOPCTRFBR(x) \
     ( _WRMSLOOPCTRFBR | IMM_ENCODE_SRC1(x) )
 
+#define UPDATEUSTATE_UCODE(testbits)        \
+    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) )
+
 #define TESTUSTATE_UCODE(testbits)        \
     ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) )
 

@@ -3,3 +3,5 @@ main.O
 ucode/*.h
 compile_commands.json
 alu_ops.h
+.ccls-cache/
+.gdb_history
