@@ -10,7 +10,7 @@ U_HEADERS = $(U_SOURCES:.u=.h)
 TARGET = main
 
 upload: $(TARGET)
-	scp main up:/home/zander/
+	scp main $(USER)@up:~
 
 ./ucode/%.h: ./ucode/%.u
 	./CustomProcessingUnit/uasm-lib/uasm.py -i $^ --avoid_unk_256 -o $@
