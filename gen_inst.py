@@ -22,7 +22,7 @@ XOR = """
 ops = ["ADD", "OR", "AND", "SUB", "XOR", "NOTAND", "ROL", "ROR", "RAS", "SHL", "SHR"]
 
 for x in ops:
-    print(XOR.replace("XOR", x))
+    print(XOR.replace("XOR", x).replace("_SUB", "_SUBR"))
 
 UJMP = """
 #define UJMPCC_DIRECT_NOTTAKEN_CONDZ(src, addr) \\
