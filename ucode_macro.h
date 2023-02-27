@@ -77,7 +77,7 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( _MOVETOCREG_DSZ64 | SRC0_ENCODE( (reg) ) | IMM_ENCODE_SRC1( (crreg) ))
 
 #define MOVE_DSZ64_REG(dst, reg)                                           \
-    ( MOVE_DSZ64(dst) | SRC0_ENCODE( (reg) ) | SRC1_ENCODE( (reg) ) )
+    ( MOVE_DSZ64(dst) | SRC0_ENCODE( (reg) ) )
 
 // imm to reg
 
@@ -289,10 +289,10 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 // helpers
 #define PUSHREG(src) \
-	SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVE_DSZ64_REG(TMP0, src), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
+    SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVE_DSZ64_REG(TMP0, src), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
 
 #define PUSHCREG(creg) \
-	SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVEFROMCREG_DSZ64_REG(TMP0, creg), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
+    SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVEFROMCREG_DSZ64_REG(TMP0, creg), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
 
 #define POPREG(dst) \
     LDZX_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL), MOVE_DSZ64_REG(dst, TMP0), ADD_DSZ64_IMM(RSP, RSP, 0x8)
