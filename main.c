@@ -93,28 +93,27 @@ void do_cpuid_patch() {
 /* U39d5: 125600000000     LFNCEWAIT-> unk_256(0x00000000) */
 /*            02a7ee31                 SEQW UEND0 */
 
-void install_vmxoff(void) {
-    u64 shit = MOVE_DSZ64_REG(RAX, TMP3);
-    printf("shit: 0x%012lx\n", shit);
-
-    u64 hook_address =0x08c8;
-    unsigned long addr = 0x7d00;
+void install_vmxon(void) {
+    u64 hook_address =0x0ae8;
+    unsigned long addr = 0x7c30;
     unsigned long ucode_patch[][4] = {
-        {POPREG(RBX), NOP_SEQWORD},
-        {POPREG(RCX), NOP_SEQWORD},
-        {POPREG(RDX), NOP_SEQWORD},
-        {POPREG(RSI), NOP_SEQWORD},
-        {POPREG(RDI), NOP_SEQWORD},
-        {POPREG(R8), NOP_SEQWORD},
-        {POPREG(R9), NOP_SEQWORD},
-        {POPREG(R10), NOP_SEQWORD},
-        {POPREG(R11), NOP_SEQWORD},
-        {POPREG(R12), NOP_SEQWORD},
-        {POPREG(R13), NOP_SEQWORD},
-        {POPREG(R14), NOP_SEQWORD},
-        {POPREG(R15), NOP_SEQWORD},
-        {POPREG(TMP2), NOP_SEQWORD},
-        { MOVETOCREG_DSZ64(TMP2, 0x67), NOP, NOP, END_SEQWORD }
+    {LDZX_DSZ64_ASZ32_SC1(TMP2, 0x0UL, R64SRC, 0x18UL), NOP, NOP, NOP_SEQWORD }, //7c30
+    {PUSHCREG(0x67), NOP_SEQWORD}, //7c34
+    {PUSHREG(R15), NOP_SEQWORD}, //7c38
+    {PUSHREG(R14), NOP_SEQWORD}, //7c3c
+    {PUSHREG(R13), NOP_SEQWORD}, //7c40
+    {PUSHREG(R12), NOP_SEQWORD}, //7c44
+    {PUSHREG(R11), NOP_SEQWORD}, //7c48
+    {PUSHREG(R10), NOP_SEQWORD}, //7c4c
+    {PUSHREG( R9), NOP_SEQWORD}, //7c50
+    {PUSHREG( R8), NOP_SEQWORD}, //7c54
+    {PUSHREG(RDI), NOP_SEQWORD}, //7c58
+    {PUSHREG(RSI), NOP_SEQWORD}, //7c5c
+    {PUSHREG(RDX), NOP_SEQWORD}, //7c60
+    {PUSHREG(RCX), NOP_SEQWORD}, //7c64
+    {PUSHREG(RBX), NOP_SEQWORD}, //7c68
+    {PUSHREG(TMP2), NOP_SEQWORD}, //7c6c
+    {POPCREG(0x67), END_SEQWORD}, //7c70
     };
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
@@ -124,13 +123,41 @@ void install_vmxoff(void) {
     hook_match_and_patch(1, hook_address, addr);
 }
 
+void install_vmxoff(void) {
+    u64 hook_address =0x08c8;
+    unsigned long addr = 0x7c80;
+    unsigned long ucode_patch[][4] = {
+    {POPREG(RBX), NOP_SEQWORD}, //7c80
+    {POPREG(RCX), NOP_SEQWORD}, //7c84
+    {POPREG(RDX), NOP_SEQWORD}, //7c88
+    {POPREG(RSI), NOP_SEQWORD}, //7c8c
+    {POPREG(RDI), NOP_SEQWORD}, //7c90
+    {POPREG( R8), NOP_SEQWORD}, //7c94
+    {POPREG( R9), NOP_SEQWORD}, //7c98
+    {POPREG(R10), NOP_SEQWORD}, //7c9c
+    {POPREG(R11), NOP_SEQWORD}, //7ca0
+    {POPREG(R12), NOP_SEQWORD}, //7ca4
+    {POPREG(R13), NOP_SEQWORD}, //7ca8
+    {POPREG(R14), NOP_SEQWORD}, //7cac
+    {POPREG(R15), NOP_SEQWORD}, //7cb0
+    {POPREG(TMP2), NOP_SEQWORD},//7cb4
+    { MOVETOCREG_DSZ64(TMP2, 0x67), NOP, NOP, END_SEQWORD } //7cb8
+    };
+    if (verbose)
+        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
+    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    if (verbose)
+        printf("jump_target return value: 0x%lx\n", ucode_invoke(addr));
+    hook_match_and_patch(2, hook_address, addr);
+}
 
 void install_jump_target(u64 uaddr) {
     /* u64 shit = SUB_DSZ64_IMM(RSP, RSP, 8); */
     /* printf("shit: 0x%012lx\n", shit); */
     install_vmxoff();
+    install_vmxon();
 
-    unsigned long addr = 0x7c30;
+    unsigned long addr = 0x7d00;
     unsigned long ucode_patch[][4] = {
         {LDZX_DSZ64_ASZ32_SC1(TMP2, 0x0UL, R64SRC, 0x18UL), NOP, NOP, NOP_SEQWORD },
         {PUSHCREG(0x67), NOP_SEQWORD},
@@ -160,6 +187,7 @@ void install_jump_target(u64 uaddr) {
 
 void persistent_trace(u64 hook_address) {
     install_jump_target(hook_address);
+    return;
     u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & CRC_UOP_MASK;
     u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & CRC_UOP_MASK;
     u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & CRC_UOP_MASK;
@@ -359,6 +387,7 @@ cpuinfo_res static inline try_xlat(u64 val) {
     asm volatile(
         "vmxon [rsi]\n\t"
         /* "int3\n\tvmxoff\n\t" */
+        /* "int3\n\tpause\n\t" */
         : "=a" (result.rax)
         , "=b" (result.rbx)
         , "=c" (result.rcx)
@@ -377,7 +406,7 @@ void xlat_fuzzing(void) {
     u64 iret_xlat = 0x07c8;
     u64 vmxon_xlat = 0x0ae8;
     u64 vmxoff_xlat = 0x08c8;
-    persistent_trace(vmxon_xlat);
+    persistent_trace(pause_xlat);
     cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
