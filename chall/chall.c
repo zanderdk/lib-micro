@@ -24,7 +24,9 @@ typedef struct {
     u64 status;
 } result;
 
-result static udbgwr(uint64_t type, uint64_t addr, uint64_t value) {
+
+__attribute__((always_inline))
+result static inline udbgwr(uint64_t type, uint64_t addr, uint64_t value) {
     uint32_t value_low = (uint32_t)(value & 0xFFFFFFFF);
     uint32_t value_high = (uint32_t)(value >> 32);
     result res;
@@ -121,6 +123,7 @@ SIMPLEWR(uram_write, uint64_t, uint64_t, 0x10)
 
 #undef SIMPLEWR
 
+__attribute__((always_inline))
 static inline uint32_t rotl32 (uint32_t n, unsigned int c)
 {
   const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);  // assumes width is a power of 2.
@@ -130,6 +133,7 @@ static inline uint32_t rotl32 (uint32_t n, unsigned int c)
   return (n<<c) | (n>>( (-c)&mask ));
 }
 
+__attribute__((always_inline))
 static inline uint32_t rotr32 (uint32_t n, unsigned int c)
 {
   const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);
@@ -167,23 +171,7 @@ void setup(void) {
 
 void (*init_it)(void) SECTION(".ctors") = setup;
 
-char flag[] = "kalmar{c0n6r47z_y0u_4r3_d4_b357_b7w_1_pr0m153_7h15_7ruly_run_0n_r34l_h4rdw4r3!}\n";
 char encrypted_flag[] = "\x94\xd9\x30\xdb\x25\xfc\x1c\x5e\x8d\x83\x0e\x14\xa9\x3a\x33\x5d\x17\x87\x2c\x63\x76\xa1\x3f\x6f\xae\x1c\x1f\x6d\x31\x8f\xe8\x11\x63\x6b\xc6\x69\xdf\xf3\x02\x9b\x22\x3a\xaf\x10\x30\x38\xab\x29\x5f\x95\x03\x96\xbb\x50\x6f\x75\xb9\x39\x3e\x74\x74\x12\x6a\xbe\x92\xb7\x36\x13\xb2\xec\x3d\xfd\xb9\x1b\x78\xef\xd7\x78\x5d\xa5";
-
-/* void _encrypt (uint32_t *v) { */
-/*     uint32_t k[] = {K1, K2, K3, K4}; */
-/*     uint32_t v0=v[0], v1=v[1]; */
-/*     uint32_t sum=0, i;           /\* set up *\/ */
-/*     uint32_t delta=DELTA_K;                     /\* a key schedule constant *\/ */
-/*     uint32_t k0=k[0], k1=k[1], k2=k[2], k3=k[3];   /\* cache key *\/ */
-/*     for (i=0; i<32; i++) {                         /\* basic cycle start *\/ */
-/*         sum += delta; */
-/*         v0 += ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1); */
-/*         v1 += ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3); */
-/*     }                                              /\* end cycle *\/ */
-/*     v[0]=v0; v[1]=v1; */
-/* } */
-
 
 __attribute__((always_inline))
 uint64_t static inline RETURN() {
@@ -213,11 +201,22 @@ uint64_t static inline CALL_ARG2(u64 addr, u64 arg, u64 arg2) {
     );
 }
 
+__attribute__((always_inline))
+uint64_t static inline CALL_ARG3(u64 addr, u64 arg, u64 arg2, u64 arg3) {
+    asm volatile(
+        "vmxon [%0]\n\t"
+        : "+r" (addr)
+        : "D" (arg)
+        , "S" (arg2)
+        , "d" (arg3)
+        : "rax", "memory"
+    );
+}
+
 typedef struct {
     u32 k[4];
     u32 delta, sum;
 } crypto_info;
-
 
 __attribute__((always_inline))
 void static inline get_crypto_info(volatile crypto_info *c) {
@@ -229,10 +228,10 @@ void static inline get_crypto_info(volatile crypto_info *c) {
         : "memory"
     );
 }
+void _decrypt (uint32_t *v);
+void decrypt(void *p, int len);
 
 crypto_info crypto;
-
-__attribute__((naked))
 __attribute__((noreturn))
 void _decrypt (uint32_t *v) {
     get_crypto_info(&crypto);
@@ -247,81 +246,38 @@ void _decrypt (uint32_t *v) {
         sum -= delta;
     }                                              /* end cycle */
     v[0]=v0; v[1]=v1;
+    asm volatile("pop rax\n\tpop rax\n\tpop rax");
     RETURN();
 }
 
-
-/* __attribute__((noreturn)) */
-void _write(char *buf, uint64_t len) {
+__attribute__((noreturn))
+void _write(int fd, char *buf, uint64_t len) {
     asm volatile(
         "syscall\n\t"
         :
         : "a" (1)
-        , "D" (1)
+        , "D" (fd)
         , "S" (buf)
         , "d" (len)
     );
+    RETURN();
 }
 
-/* char *encrypt(void *p, int len) { */
-/*     void *buf = p; */
-/*     for (int i = 0; i < len; i+=8) { */
-/*         _encrypt( (uint32_t *) (buf+i)); */
-/*     } */
-/*     return (char *)p; */
-/* } */
 u64 _dec = (u64) &_decrypt;
-
-/* __attribute__((naked)) */
-/* __attribute__((noreturn)) */
+__attribute__((noreturn))
 void decrypt(void *p, int len) {
-    void *buf = p;
     for (int i = 0; i < len; i+=8) {
-        /* _decrypt( (uint32_t *) (buf+i)); */
-        CALL_ARG1( (u64) (&_dec), (u64) (buf+i));
+        CALL_ARG1( (u64) (&_dec), (u64) (p+i));
     }
-    /* RETURN(); */
+    RETURN();
 }
 
-/* __attribute__((noreturn)) */
-/* void shit_function(void) { */
-/*     asm volatile("pop rbp\n\tvmxoff"); */
-/* } */
 
-
-cpu_set_t set;
-void assign_to_core(int core_id) {
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(core_id, &cpuset);
-    sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset);
-}
-
+u64 dec = (u64) &decrypt;
+u64 wr = (u64) &_write;
 int main(void) {
     asm volatile("hlt");
-    assign_to_core(3);
-    volatile u64 dec = (u64) &decrypt;
-    volatile u64 wr = (u64) &_write;
-    /* asm volatile("hlt"); */
-    /* char *buf = encrypt(flag, 0x50); */
-    /* _write(buf, 0x50); */
-    decrypt(encrypted_flag, 0x50);
-    /* CALL_ARG2((u64) &dec, (u64) encrypted_flag, (u64) 0x50); */
-    /* CALL_ARG2((u64) &wr, (u64) encrypted_flag, (u64) 0x50); */
-    _write(encrypted_flag, 0x50);
+    CALL_ARG2((u64) &dec, (u64) encrypted_flag, (u64) 0x50);
+    CALL_ARG3((u64) &wr, 1, (u64) encrypted_flag, (u64) 0x50);
     return 0;
 }
-
-/* void _start() */
-/* { */
-/*     int res = 0; */
-/*     setup(); */
-/*     /\* res = _main(); *\/ */
-
-/*     asm volatile( */
-/*         "syscall\n\t" */
-/*         : */
-/*         : "a" (60) */
-/*         , "D" (res) */
-/*     ); */
-/* } */

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -no-pie -fno-stack-protector -Os -ggdb -masm=intel
+CFLAGS = -no-pie -fno-stack-protector -O3 -ggdb -masm=intel
 # gcc -no-pie -O3 -ggdb -masm=intel chall.c -o chall
 
 SOURCES = $(wildcard *.c)
