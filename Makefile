@@ -23,7 +23,7 @@ build: $(TARGET)
 alu_ops.h: gen_inst.py
 	python gen_inst.py > alu_ops.h
 
-$(TARGET): build-ucode alu_ops.h
+$(TARGET): build-ucode alu_ops.h $(SOURCES)
 	$(CC) $(CFLAGS) $(SOURCES) $(LIBS) -o $@
 
 clean:

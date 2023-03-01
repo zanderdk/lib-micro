@@ -97,13 +97,18 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( MOVE_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 // uram/stagingbuf to reg
+#define READURAM_REG(dst, addr_reg) \
+    ( _READURAM | DST_ENCODE(dst) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
 
-#define READURAM(dst, imm) \
+#define READURAM_IMM(dst, imm) \
     ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
 //TODO: cant write higer than 0x8c have no idea why
-#define WRITEURAM(src, off) \
+#define WRITEURAM_IMM(src, off)                                        \
     ( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(off) | MOD2 )
+
+#define WRITEURAM_REG(dst, addr_reg) \
+    ( _WRITEURAM | DST_ENCODE(dst) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
     ( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
@@ -283,7 +288,9 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( SEQ_UP0(2) | SEQ_EFLOW(0x3) | SEQ_SYNC(1) )
 
 #define NOP_SEQWORD (0x0000300000c0uL)
-#define END_SEQWORD (0x130000f2)
+
+/* #define END_SEQWORD (0x90000F2) */
+#define END_SEQWORD (0x130000f2ul)
 
 #define END_UNKOWN_UOP (0x125600000000uL)
 
