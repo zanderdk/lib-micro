@@ -24,6 +24,7 @@ typedef struct {
     u64 status;
 } result;
 
+#define STOP() asm volatile("hlt");
 
 __attribute__((always_inline))
 result static inline udbgwr(uint64_t type, uint64_t addr, uint64_t value) {
@@ -241,6 +242,7 @@ void _decrypt (uint32_t *v) {
     uint32_t delta=crypto.delta;                     /* a key schedule constant */
     uint32_t k0=crypto.k[0], k1=crypto.k[1], k2=crypto.k[2], k3=crypto.k[3];   /* cache key */
     for (i=0; i<32; i++) {                         /* basic cycle start */
+        STOP();
         v1 -= ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3);
         v0 -= ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1);
         sum -= delta;
@@ -276,7 +278,7 @@ void decrypt(void *p, int len) {
 u64 dec = (u64) &decrypt;
 u64 wr = (u64) &_write;
 int main(void) {
-    asm volatile("hlt");
+    STOP();
     CALL_ARG2((u64) &dec, (u64) encrypted_flag, (u64) 0x50);
     CALL_ARG3((u64) &wr, 1, (u64) encrypted_flag, (u64) 0x50);
     return 0;

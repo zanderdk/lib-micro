@@ -249,16 +249,16 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( SEQ_CTRL0 | SEQ_UP1(2) | NO_SYNC | SEQ_UADDR(addr) )
 
 #define SEQ_UEND0(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xc) | SEQ_SYNC(1) )
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xc) )
 
 #define SEQ_UEND1(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xd) | SEQ_SYNC(1) )
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xd) )
 
 #define SEQ_UEND3(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xe) | SEQ_SYNC(1) )
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xe) )
 
 #define SEQ_UEND4(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) | SEQ_SYNC(1) )
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) )
 
 #define SEQ_UEND0_0 \
     ( SEQ_UEND0(0) )

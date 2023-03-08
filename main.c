@@ -211,7 +211,7 @@ void persistent_trace(u64 hook_address) {
     unsigned long addr = 0x7c10;
 
     unsigned long ucode_patch[][4] = {
-        { WRITEURAM_IMM(TMP0, 0x48), MOVEFROMCREG_DSZ64_REG(TMP0, 0x67), SHR_DSZ64_IMM(RAX, TMP0, 63), NOP_SEQWORD }, //0x7d00
+        { WRITEURAM_IMM(TMP0, 0x48), MOVEFROMCREG_DSZ64_REG(TMP0, 0x67), SHR_DSZ64_IMM(TMP0, TMP0, 63), NOP_SEQWORD }, //0x7d00
         { XOR_DSZ64_IMM(TMP0, TMP0, 0x1), UJMPCC_DIRECT_NOTTAKEN_CONDNZ(TMP0, JUMP_DESTINATION), READURAM_IMM(TMP0, 0x48), END_SEQWORD },
     };
     /* unsigned long ucode_patch[][4] = { */
