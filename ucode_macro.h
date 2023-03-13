@@ -103,12 +103,8 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define READURAM_IMM(dst, imm) \
     ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
-//TODO: cant write higer than 0x8c have no idea why
-#define WRITEURAM_IMM(src, off)                                        \
-    ( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(off) | MOD2 )
-
-#define WRITEURAM_REG(dst, addr_reg) \
-    ( _WRITEURAM | DST_ENCODE(dst) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
+#define WRITEURAM_REG(src, imm) \
+    ( _WRITEURAM | SRC0_ENCODE( (src) ) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
     ( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
@@ -195,6 +191,8 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #define TESTUSTATE_MSLOOP \
     ( TESTUSTATE_UCODE(1) )
+
+#define UNK256 0x125600000000UL
 
 #define SEQ_UADDR(addr) \
     ( (addr & 0x7fffUL) << 8 )
