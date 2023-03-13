@@ -20,23 +20,6 @@ typedef int32_t  s32;
 typedef int16_t  s16;
 typedef int8_t   s8;
 
-#define SA_ADDR u64 //?
-#define SA_VALUE u32 //?
-#define SA_STATUS u64 //?
-
-#define CRBUS_ADDR u64 //?
-#define CRBUS_VALUE u64 //?
-
-#define URAM_ADDR u64 //?
-#define URAM_VALUE u64 //?
-
-#define STAGING_ADDR u64 //?
-#define STAGING_VALUE u64 //?
-
-#define IOSF_ADDR u64 // ?
-#define IOSF_VALUE u64 // ?
-#define IOSF_STATUS u64 // ?
-
 typedef struct {
     u64 value;
     u64 status;
@@ -63,29 +46,29 @@ result static inline udbgrd(uint64_t type, uint64_t addr) {
     return res;
 }
 
-#define SIMPLERD(name, ret_t, addr_t, type) \
+#define SIMPLERD(name, type) \
 __attribute__((always_inline)) \
-ret_t static inline name(addr_t addr) { \
-    return (ret_t)udbgrd(type, addr).value; \
+u64 static inline name(u64 addr) { \
+    return (u64)udbgrd(type, addr).value; \
 }
 
-SIMPLERD(crbus_read, CRBUS_VALUE, CRBUS_ADDR, 0x00)
-SIMPLERD(uram_read, URAM_VALUE, URAM_ADDR, 0x10)
-SIMPLERD(io8_read, uint8_t, uint16_t, 0x18)
-SIMPLERD(io16_read, uint16_t, uint16_t, 0x48)
-SIMPLERD(io32_read, uint32_t, uint16_t, 0x50)
-SIMPLERD(io64_read, uint64_t, uint16_t, 0x58)
-SIMPLERD(staging_read, STAGING_VALUE, STAGING_ADDR, 0x80)
-SIMPLERD(staging2_read, STAGING_VALUE, STAGING_ADDR, 0x40)
+SIMPLERD(crbus_read, 0x00)
+SIMPLERD(uram_read, 0x10)
+SIMPLERD(io8_read, 0x18)
+SIMPLERD(io16_read, 0x48)
+SIMPLERD(io32_read, 0x50)
+SIMPLERD(io64_read, 0x58)
+SIMPLERD(staging_read, 0x80)
+SIMPLERD(staging2_read, 0x40)
 
 #undef SIMPLERD
 
-#define STATUSRD(name, addr_t, type) \
-result static inline name(addr_t addr) { \
+#define STATUSRD(name, type) \
+result static inline name(u64 addr) { \
  return udbgrd(type, addr); \
 }
 
-STATUSRD(sa_read, uint64_t /*?*/, 0x08)
+STATUSRD(sa_read, 0x08)
 
 #undef STATUSRD
 
@@ -177,46 +160,46 @@ uint64_t static inline udbgwr_sideband(uint64_t port, uint64_t opcode, uint64_t 
     return rax;
 }
 
-#define SIMPLEWR(name, val_t, addr_t, type)     \
+#define SIMPLEWR(name, type)     \
 __attribute__((always_inline)) \
-void static inline name(addr_t addr, val_t value) { \
+void static inline name(u64 addr, u64 value) { \
     udbgwr(type, addr, value); \
 }
 
-SIMPLEWR(crbus_write, CRBUS_VALUE, CRBUS_ADDR, 0x00)
-SIMPLEWR(uram_write, URAM_VALUE, URAM_ADDR, 0x10)
-SIMPLEWR(io8_write, uint8_t, uint16_t, 0x18)
-SIMPLEWR(io16_write, uint16_t, uint16_t, 0x48)
-SIMPLEWR(io32_write, uint32_t, uint16_t, 0x50)
-SIMPLEWR(io64_write, uint64_t, uint16_t, 0x58)
-SIMPLEWR(staging_write, STAGING_VALUE, STAGING_ADDR, 0x80)
-SIMPLEWR(staging2_write, STAGING_VALUE, STAGING_ADDR, 0x40)
+SIMPLEWR(crbus_write, 0x00)
+SIMPLEWR(uram_write, 0x10)
+SIMPLEWR(io8_write, 0x18)
+SIMPLEWR(io16_write, 0x48)
+SIMPLEWR(io32_write, 0x50)
+SIMPLEWR(io64_write, 0x58)
+SIMPLEWR(staging_write, 0x80)
+SIMPLEWR(staging2_write, 0x40)
 
 #undef SIMPLEWR
 
-#define RBXWR(name, val_t, addr_t, status_t, type) \
+#define RBXWR(name, type) \
 __attribute__((always_inline)) \
-status_t static inline name(addr_t addr, val_t value) { \
-    return (status_t)udbgwr(type, addr, value).status; \
+u64 static inline name(u64 addr, u64 value) { \
+    return (u64)udbgwr(type, addr, value).status; \
 }
 
-RBXWR(sa_write, SA_VALUE, SA_ADDR, SA_STATUS, 0x08)
+RBXWR(sa_write, 0x08)
 
 #undef RBXWR
 
-#define RDXWR(name, val_t, addr_t, status_t, type) \
+#define RDXWR(name, type) \
 __attribute__((always_inline)) \
-status_t static inline name(addr_t addr, val_t value) { \
-    return (status_t)udbgwr(type, addr, value).value; \
+u64 static inline name(u64 addr, u64 value) { \
+    return (u64)udbgwr(type, addr, value).value; \
 }
 
-RDXWR(iosf_sb_write, IOSF_VALUE, IOSF_ADDR, IOSF_STATUS, 0xD0)
+RDXWR(iosf_sb_write, 0xD0)
 
 #undef RDXWR
 
 __attribute__((always_inline))
-SA_STATUS static inline sa_write_opcode(SA_ADDR addr, SA_VALUE value, uint32_t opcode) {
-    return (SA_STATUS)udbgwr(0xC8, addr, (uint64_t)value | ((uint64_t)opcode << 32)).status;
+u64 static inline sa_write_opcode(u64 addr, u64 value, uint32_t opcode) {
+    return (u64)udbgwr(0xC8, addr, (uint64_t)value | ((uint64_t)opcode << 32)).status;
 }
 
 __attribute__((always_inline))
