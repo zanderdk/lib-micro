@@ -57,27 +57,16 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define UJMP(uaddr) \
     (_UJMP | IMM_ENCODE_SRC1( (uaddr) ))
 
-// generic moves
-
-#define MOVE_DSZ64(dst) \
-    ( _MOVE_DSZ64 | DST_ENCODE(dst) )
-
-#define MOVEFROMCREG_DSZ64(dst) \
-    ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) )
-
-#define LDSTGBUF_DSZ64_ASZ16_SC1(dst) \
-    ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) )
-
 // reg to reg
 
 #define MOVEFROMCREG_DSZ64_REG(dst, crreg)             \
-    ( MOVEFROMCREG_DSZ64(dst) | IMM_ENCODE_SRC1( (crreg) ))
+    ( ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) ) | IMM_ENCODE_SRC1( (crreg) ))
 
 #define MOVETOCREG_DSZ64(reg, crreg)             \
     ( _MOVETOCREG_DSZ64 | SRC0_ENCODE( (reg) ) | IMM_ENCODE_SRC1( (crreg) ))
 
 #define MOVE_DSZ64_REG(dst, reg)                                           \
-    ( MOVE_DSZ64(dst) | SRC0_ENCODE( (reg) ) )
+    ( _MOVE_DSZ64 | DST_ENCODE(dst) | SRC0_ENCODE( (reg) ) )
 
 // imm to reg
 
@@ -94,7 +83,7 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( _ZEROEXT_DSZ8(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 #define MOVE_DSZ64_IMM(dst, imm)                                           \
-    ( MOVE_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _MOVE_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 // uram/stagingbuf to reg
 #define READURAM_REG(dst, addr_reg) \
@@ -107,7 +96,7 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( _WRITEURAM | SRC0_ENCODE( (src) ) | IMM_ENCODE_SRC1(imm) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
-    ( LDSTGBUF_DSZ64_ASZ16_SC1(dst) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
+    ( ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) ) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
 
 #define STADSTGBUF_DSZ64_ASZ16_SC1_REG(src, off)             \
     ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(off) | MOD2 )
