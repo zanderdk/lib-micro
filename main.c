@@ -88,12 +88,22 @@ void do_cpuid_patch() {
     hook_match_and_patch(0, hook_address, addr);
 }
 
-#define JUMP_DESTINATION 0x7d00
-void install_jump_target(void) {
+void do_hlt_patch() {
+    #include "ucode/hlt.h"
+    if (verbose)
+        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
+    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    hook_match_and_patch(0, hook_address, addr);
+}
 
+#define JUMP_DESTINATION 0x7c10
+void install_jump_target(void) {
     unsigned long addr = JUMP_DESTINATION;
+
     unsigned long ucode_patch[][4] = {
-        { MOVE_DSZ64_IMM(TMP0, 0x6F6E), MOVE_DSZ64_IMM(TMP1, 0x6E70), MOVE_DSZ64_IMM(TMP2, 0x6F6E), END_SEQWORD }, //0x7d00
+    { MOVE_DSZ64_REG(TMP0, TMP1), WRITEURAM_REG(TMP0, 0x2c), STADSTGBUF_DSZ64_ASZ16_SC1_REG(TMP0, 0xba00),
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7d00
+        {UNK256, NOP, NOP, END_SEQWORD}, //0x7d04
     };
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
@@ -102,17 +112,12 @@ void install_jump_target(void) {
         printf("jump_target return value: 0x%lx\n", ucode_invoke(addr));
 }
 
-void persistent_trace(u64 hook_address) {
+void persistent_trace(u64 hook_address, u64 idx) {
     install_jump_target();
     u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & CRC_UOP_MASK;
     u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & CRC_UOP_MASK;
     u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & CRC_UOP_MASK;
     u64 seq =  ldat_array_read(0x6a0, 1, 0, 0, hook_address) & CRC_SEQ_MASK; //sequence word
-
-    uop0 = CRC_UOP(uop0);
-    uop1 = CRC_UOP(uop1);
-    uop2 = CRC_UOP(uop2);
-    seq = CRC_SEQ(seq);
 
     if (verbose) {
         printf("uop0: 0x%012lx\n", uop0);
@@ -122,27 +127,38 @@ void persistent_trace(u64 hook_address) {
     }
     /* #include "ucode/persistent_trace.h" */
 
-    unsigned long addr = 0x7c10;
+    unsigned long addr = 0x7c20;
 
     unsigned long ucode_patch[][4] = {
-        { WRITEURAM_IMM(TMP0, 0x48), MOVEFROMCREG_DSZ64_REG(TMP0, 0x67), SHR_DSZ64_IMM(TMP0, TMP0, 63), NOP_SEQWORD }, //0x7c10
-        { XOR_DSZ64_IMM(TMP0, TMP0, 0x1), UJMPCC_DIRECT_NOTTAKEN_CONDNZ(TMP0, JUMP_DESTINATION), READURAM_IMM(TMP0, 0x48), END_SEQWORD },
+        { WRITEURAM_REG(TMP0, 0x28), WRITEURAM_REG(TMP1, 0x29), NOP,
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c20
+
+        { MOVEFROMCREG_DSZ64_REG(TMP0, 0x67), SHR_DSZ64_IMM(TMP0, TMP0, 63), NOP,
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c24
+
+        { XOR_DSZ64_IMM(TMP0, TMP0, 0x1), UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, (addr + 0x1C) ), NOP,
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC1 }, //0x7c28
+
+        { MOVE_DSZ64_IMM(TMP1, hook_address), MOVE_DSZ64_IMM(TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10),
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c2c
+
+        { OR_DSZ64_IMM(TMP0, TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead),
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c30
+
+        { SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), XOR_DSZ64_REG(TMP0, TMP0, RAX),
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c34
+
+        { UJMPCC_DIRECT_NOTTAKEN_CONDNZ(TMP0, (addr + 0x1C) ), NOP, NOP,
+            SEQ_GOTO2(JUMP_DESTINATION) | SEQ_SYNCWTMRK | SEQ_SYNC0 }, //0x7c38
+
+        { READURAM_REG(TMP0, 0x28), READURAM_REG(TMP1, 0x29), NOP,
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c3c
+
+        { uop0, uop1, uop2, seq}, //0x7c40
+
+        { UJMP(hook_address+4), NOP, NOP,
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC0 } //0x7c44
     };
-    /* unsigned long ucode_patch[][4] = { */
-    /*     /\* { MOVEFROMCREG_DSZ64_REG(TMP0, 0x67), NOP, SHR_DSZ64_IMM(RAX, TMP0, 63), END_SEQWORD }, //0x7c10 *\/ */
-    /*     // U7c10: WRITEURAM(tmp0, 0x01a0, 64); tmp0:= MOVE_DSZ64(0xdead); tmp0:= SHL_DSZ64(tmp0, 0x10) */
-    /*     {WRITEURAM_IMM(TMP0, 0x48), MOVE_DSZ64_IMM(TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), NOP_SEQWORD}, */
-    /*     // U7c14: tmp0:= OR_DSZ64(tmp0, 0xdead); tmp0:= SHL_DSZ64(tmp0, 0x10); tmp0:= OR_DSZ64(tmp0, 0xdead) */
-    /*     {OR_DSZ64_IMM(TMP0, TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), NOP_SEQWORD}, */
-    /*     // U7c18: tmp0:= SHL_DSZ64(tmp0, 0x10); tmp0:= OR_DSZ64(tmp0, 0xdead); tmp0:= XOR_DSZ64(tmp0, rax) */
-    /*     {SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), XOR_DSZ64_REG(TMP0, TMP0, RAX), NOP_SEQWORD}, */
-    /*     // U7c1c: UJMPCC_DIRECT_NOTTAKEN_CONDZ(tmp0, 0x7c30); tmp0:= READURAM( , 0x01a0, 64); NOP */
-    /*     {UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, JUMP_DESTINATION), READURAM_IMM(TMP0, 0x48), NOP, NOP_SEQWORD}, //REMEMBER THIS ONE!!!!! */
-    /*     // U7c20: orig uops */
-    /*     {uop0, uop1, uop2, seq}, */
-    /*     // U7c24: UJMP(, hook_address); NOP; NOP */
-    /*     {UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD} */
-    /* }; */
 
     if (verbose) {
         for (u64 i = 0; i < sizeof(ucode_patch) / sizeof(ucode_patch[0]); i++) {
@@ -153,7 +169,7 @@ void persistent_trace(u64 hook_address) {
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
-    hook_match_and_patch(0, hook_address, addr);
+    hook_match_and_patch(idx, hook_address, addr);
 
 }
 
@@ -292,19 +308,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
     return 0;
 }
 
-__attribute__((always_inline))
-cpuinfo_res static inline try_xlat(u64 val) {
+cpuinfo_res try_xlat(u64 val) {
     u64 rax = val;
     cpuinfo_res result;
     lmfence();
     asm volatile(
-        /* "int3\n\tvmclear [rsi]\n\t" */
-        /* "vmxon [rsi]\n\t" */
-        /* "int3\n\tvmxoff\n\t" */
-        /* "int3\n\tpause\n\t" */
-        /* "pause\n\t" */
-        /* "int3\n\thlt\n\t" */
-        "hlt\n\t"
+        "iret\n\t"
         : "=a" (result.rax)
         , "=b" (result.rbx)
         , "=c" (result.rcx)
@@ -317,20 +326,32 @@ cpuinfo_res static inline try_xlat(u64 val) {
 }
 
 void xlat_fuzzing(void) {
+    staging_write(0xba00, 0x0);
+    uram_write(0x2c, 0x0);
+
     u64 cpuid_xlat = 0x0be0;
     u64 pause_xlat = 0x0bf0;
-    u64 iret_xlat = 0x07c8;
+    u64 iret_xlat = 0x07c8; //think this is wrong
     u64 vmxon_xlat = 0x0ae8;
     u64 vmxoff_xlat = 0x08c8;
     u64 vmlaunch_xlat = 0x0328;
     u64 vmclear_xlat = 0x0af8;
     u64 hlt_xlat = 0x0818;
-    persistent_trace(hlt_xlat);
+    persistent_trace(iret_xlat, 0);
+    /* do_hlt_patch(); */
     cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
     printf("rcx:        0x%lx\n", val.rcx);
     printf("rdx:        0x%lx\n", val.rdx);
+
+
+    u64 uaddr1 = staging_read(0xba00);
+    u64 uaddr2 = uram_read(0x2c);
+
+    printf("staging 0xba00: 0x%lx\n", uaddr1);
+    printf("uram addr 0x2a: 0x%lx\n", uaddr2);
+    puts("");
 }
 
 

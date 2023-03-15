@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O0 -static -ggdb -Wall -masm=intel
+CFLAGS = -O0 -Wno-unused-variable -static -ggdb -Wall -masm=intel
 
 SOURCES = $(wildcard *.c)
 OBJECTS = $(SOURCES:.c=.o)
@@ -10,7 +10,7 @@ U_HEADERS = $(U_SOURCES:.u=.h)
 TARGET = main
 
 upload: $(TARGET)
-	scp main $(USER)@up:~
+	scp mai* $(USER)@up:~
 
 ./ucode/%.h: ./ucode/%.u
 	./CustomProcessingUnit/uasm-lib/uasm.py -i $^ --avoid_unk_256 -o $@

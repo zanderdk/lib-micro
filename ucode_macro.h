@@ -207,6 +207,10 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #define NO_SYNC SEQ_UP2(3)
 
+
+#define SEQ_NEXT \
+    SEQ_UP1(3)
+
 //CTRL idx controls URET UEND USAVEUIP
 //END idx controls GOTO
 //SYNC idx controls sync doh
@@ -241,10 +245,10 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define SEQ_UEND1(idx) \
     ( SEQ_UP0(idx) | SEQ_EFLOW(0xd) )
 
-#define SEQ_UEND3(idx) \
+#define SEQ_UEND2(idx) \
     ( SEQ_UP0(idx) | SEQ_EFLOW(0xe) )
 
-#define SEQ_UEND4(idx) \
+#define SEQ_UEND3(idx) \
     ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) )
 
 #define SEQ_UEND0_0 \
