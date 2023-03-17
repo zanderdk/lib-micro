@@ -27,10 +27,8 @@ unsigned long ucode_patch[][4] = {
     },
 
     {   // 0x7c20
-        MOVE_DSZ64_IMM(RAX, 0x1337),
-        SUB_DSZ32_IMM0(RAX, 0x1, RAX),
-        //MOVE_DSZ64_IMM(RAX, 0x7473),
-        //CONCAT_DSZ16_IMM(RAX, RAX, 0x7563),
+        MOVE_DSZ64_IMM(RAX, 0x7473),
+        CONCAT_DSZ16_IMM(RAX, RAX, 0x7563),
         MOVE_DSZ64_IMM(RBX, 0x632d),
         NOP_SEQWORD
     },
