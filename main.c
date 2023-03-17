@@ -6,6 +6,9 @@
 
 #include "ucode_macro.h"
 
+#define ARRAY_SZ(arr) \
+    sizeof(arr)/sizeof(arr[0])
+
 u8 verbose = 0;
 
 cpu_set_t set;
@@ -112,7 +115,7 @@ void install_jump_target(void) {
         printf("jump_target return value: 0x%lx\n", ucode_invoke(addr));
 }
 
-void persistent_trace(u64 hook_address, u64 idx) {
+void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
     install_jump_target();
     u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & CRC_UOP_MASK;
     u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & CRC_UOP_MASK;
@@ -125,9 +128,6 @@ void persistent_trace(u64 hook_address, u64 idx) {
         printf("uop2: 0x%012lx\n", uop2);
         printf("seqw: 0x%08lx\n", seqw);
     }
-
-    unsigned long addr = 0x7c20;
-
     unsigned long ucode_patch[][4] = {
         { WRITEURAM_IMM(TMP0, 0x28), WRITEURAM_IMM(TMP1, 0x29), TESTUSTATE_SYS_NOT(0x2),
             SEQ_GOTO2( (addr + 0x11) ) }, //0x7c20
@@ -314,20 +314,18 @@ void xlat_fuzzing(void) {
     u64 vmlaunch_xlat = 0x0328;
     u64 vmclear_xlat = 0x0af8;
     u64 hlt_xlat = 0x0818;
-    persistent_trace(iret_xlat, 0);
+
+    u64 addrs[] = {iret_xlat, hlt_xlat};
+    u64 uaddr = 0x7c20;
+    for (u64 i = 0; i < ARRAY_SZ(addrs); i++) {
+        persistent_trace(uaddr + i * 0x20, addrs[i], i);
+    }
     /* do_hlt_patch(); */
     cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
     printf("rcx:        0x%lx\n", val.rcx);
     printf("rdx:        0x%lx\n", val.rdx);
-
-
-    u64 uaddr1 = staging_read(0xba00);
-    u64 uaddr2 = uram_read(0x2c);
-
-    printf("staging 0xba00: 0x%lx\n", uaddr1);
-    printf("uram addr 0x2a: 0x%lx\n", uaddr2);
     puts("");
 }
 
