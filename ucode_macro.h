@@ -86,14 +86,17 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( _MOVE_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC0( (imm) ))
 
 // uram/stagingbuf to reg
-#define READURAM_REG(dst, addr_reg) \
-    ( _READURAM | DST_ENCODE(dst) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
+#define READURAM_REG(dst_reg, addr_reg) \
+    ( _READURAM | DST_ENCODE(dst_reg) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
 
-#define READURAM_IMM(dst, imm) \
-    ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) | MOD2 )
+#define READURAM_IMM(dst_reg, addr_imm) \
+    ( _READURAM | DST_ENCODE(dst_reg) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
 
-#define WRITEURAM_REG(src, imm) \
-    ( _WRITEURAM | SRC0_ENCODE( (src) ) | IMM_ENCODE_SRC1(imm) | MOD2 )
+#define WRITEURAM_IMM(src_reg, addr_imm) \
+    ( _WRITEURAM | SRC0_ENCODE( (src_reg) ) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
+
+#define WRITEURAM_REG(src_reg, addr_reg) \
+    ( _WRITEURAM | SRC0_ENCODE( (src_reg) ) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
     ( ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) ) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
