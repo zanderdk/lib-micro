@@ -164,19 +164,19 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) )
 
 #define TESTUSTATE_SYS(testbits)        \
-    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 )
 
 #define TESTUSTATE_VMX(testbits)        \
-    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD2 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2 )
 
 #define TESTUSTATE_UCODE_NOT(testbits)        \
-    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD0 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) | MOD0 )
 
 #define TESTUSTATE_SYS_NOT(testbits)        \
-    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD0 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD0 )
 
 #define TESTUSTATE_VMX_NOT(testbits)        \
-    ( _TESTUSTATE | IMM_ENCODE_SRC0(testbits) | MOD1 | MOD2 | MOD0 )
+    ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2 | MOD0 )
 
 #define TESTUSTATE_MSLOOP \
     ( TESTUSTATE_UCODE(1) )

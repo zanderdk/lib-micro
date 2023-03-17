@@ -101,7 +101,7 @@ void install_jump_target(void) {
     unsigned long addr = JUMP_DESTINATION;
 
     unsigned long ucode_patch[][4] = {
-    { MOVE_DSZ64_REG(TMP0, TMP1), WRITEURAM_REG(TMP0, 0x2c), STADSTGBUF_DSZ64_ASZ16_SC1_REG(TMP0, 0xba00),
+    { MOVE_DSZ64_REG(TMP0, TMP1), WRITEURAM_REG(TMP0, 0x2c), MOVE_DSZ64_IMM(RAX, 0x1337),
             SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7d00
         {UNK256, NOP, NOP, END_SEQWORD}, //0x7d04
     };
@@ -130,34 +130,24 @@ void persistent_trace(u64 hook_address, u64 idx) {
     unsigned long addr = 0x7c20;
 
     unsigned long ucode_patch[][4] = {
-        { WRITEURAM_REG(TMP0, 0x28), WRITEURAM_REG(TMP1, 0x29), NOP,
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c20
-
-        { MOVEFROMCREG_DSZ64_REG(TMP0, 0x67), SHR_DSZ64_IMM(TMP0, TMP0, 63), NOP,
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c24
-
-        { XOR_DSZ64_IMM(TMP0, TMP0, 0x1), UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, (addr + 0x1C) ), NOP,
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC1 }, //0x7c28
+        { WRITEURAM_REG(TMP0, 0x28), WRITEURAM_REG(TMP1, 0x29), TESTUSTATE_SYS_NOT(0x2),
+            SEQ_GOTO2( (addr + 0x11) ) }, //0x7c20
 
         { MOVE_DSZ64_IMM(TMP1, hook_address), MOVE_DSZ64_IMM(TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10),
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c2c
+            NOP_SEQWORD }, //0x7c24
 
         { OR_DSZ64_IMM(TMP0, TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead),
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c30
+            NOP_SEQWORD }, //0x7c28
 
         { SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), XOR_DSZ64_REG(TMP0, TMP0, RAX),
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c34
+            NOP_SEQWORD }, //0x7c2c
 
-        { UJMPCC_DIRECT_NOTTAKEN_CONDNZ(TMP0, (addr + 0x1C) ), NOP, NOP,
-            SEQ_GOTO2(JUMP_DESTINATION) | SEQ_SYNCWTMRK | SEQ_SYNC0 }, //0x7c38
+        { UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, (JUMP_DESTINATION) ), READURAM_REG(TMP0, 0x28), READURAM_REG(TMP1, 0x29),
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC0 }, //0x7c30
 
-        { READURAM_REG(TMP0, 0x28), READURAM_REG(TMP1, 0x29), NOP,
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7c3c
+        { uop0, uop1, uop2, seq }, //0x7c34
 
-        { uop0, uop1, uop2, seq}, //0x7c40
-
-        { UJMP(hook_address+4), NOP, NOP,
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC0 } //0x7c44
+        { UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD } //0x7c38
     };
 
     if (verbose) {
@@ -313,7 +303,7 @@ cpuinfo_res try_xlat(u64 val) {
     cpuinfo_res result;
     lmfence();
     asm volatile(
-        "iret\n\t"
+        "iretq\n\t"
         : "=a" (result.rax)
         , "=b" (result.rbx)
         , "=c" (result.rcx)

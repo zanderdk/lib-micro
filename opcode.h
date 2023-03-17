@@ -89,7 +89,8 @@
 #define _NOTAND_DSZ32 (0x007UL << 32)
 #define _ZEROEXT_DSZ32 (0x008UL << 32)
 #define _MOVE_DSZ32 (0x009UL << 32)
-#define _TESTUSTATE (0x04aUL << 32)
+/* #define _TESTUSTATE (0x04aUL << 32) */
+#define _TESTUSTATE (0x00aUL << 32)
 #define _UPDATEUSTATE (0x00bUL << 32)
 #define _SAVEUIP (0x00cUL << 32)
 #define _SAVEUIP_REGOVR (0x00dUL << 32)
