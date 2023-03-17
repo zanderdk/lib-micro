@@ -9,6 +9,15 @@ XOR = """
 #define XOR_DSZ8_IMM(dst, src, imm) \\
     ( _XOR_DSZ8 | DST_ENCODE(dst) | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(imm) )
 
+#define XOR_DSZ64_IMM0(dst, imm, src) \\
+    ( _XOR_DSZ64 | DST_ENCODE(dst) | SRC1_ENCODE(src) | IMM_ENCODE_SRC0(imm) )
+#define XOR_DSZ32_IMM0(dst, imm, src) \\
+    ( _XOR_DSZ32 | DST_ENCODE(dst) | SRC1_ENCODE(src) | IMM_ENCODE_SRC0(imm) )
+#define XOR_DSZ16_IMM0(dst, imm, src) \\
+    ( _XOR_DSZ16 | DST_ENCODE(dst) | SRC1_ENCODE(src) | IMM_ENCODE_SRC0(imm) )
+#define XOR_DSZ8_IMM0(dst, imm, src) \\
+    ( _XOR_DSZ8 | DST_ENCODE(dst) | SRC1_ENCODE(src) | IMM_ENCODE_SRC0(imm) )
+
 #define XOR_DSZ64_REG(dst, src0, src1) \\
     ( _XOR_DSZ64 | DST_ENCODE(dst) | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) )
 #define XOR_DSZ32_REG(dst, src0, src1) \\
@@ -19,10 +28,10 @@ XOR = """
     ( _XOR_DSZ8 | DST_ENCODE(dst) | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) )
 """
 
-ops = ["ADD", "OR", "AND", "SUB", "XOR", "NOTAND", "ROL", "ROR", "RAS", "SHL", "SHR"]
+ops = ["ADD", "OR", "AND", "SUB", "SUBR", "XOR", "NOTAND", "ROL", "ROR", "RAS", "SHL", "SHR", "CONCAT"]
 
 for x in ops:
-    print(XOR.replace("XOR", x).replace("_SUB", "_SUBR"))
+    print(XOR.replace("XOR", x))
 
 UJMP = """
 #define UJMPCC_DIRECT_NOTTAKEN_CONDZ(src, addr) \\

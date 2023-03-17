@@ -1,5 +1,0 @@
-.org 0x7d00
-rax:= MOVEFROMCREG_DSZ64(, 0x67)
-#rbx := LDZX_DSZ64_ASZ32_SC1(0x02, rax) !m2
-rcx := READURAM(, 0x60, 64) !m2
-rdx:= MOVE_DSZ64(rsi)

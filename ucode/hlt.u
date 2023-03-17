@@ -1,5 +1,0 @@
-.org 0x7d00
-.patch 0x07c8
-tmp0 := READURAM(, 0x28, 64) !m2
-tmp0 := ADD_DSZ64(tmp0, 0x1)
-WRITEURAM(tmp0, 0x28, 64) !m2

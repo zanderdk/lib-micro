@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 
 #include "main.h"
-#include<argp.h>
+#include <argp.h>
 #include <string.h>
 
 #include "ucode_macro.h"
@@ -117,15 +117,14 @@ void persistent_trace(u64 hook_address, u64 idx) {
     u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & CRC_UOP_MASK;
     u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & CRC_UOP_MASK;
     u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & CRC_UOP_MASK;
-    u64 seq =  ldat_array_read(0x6a0, 1, 0, 0, hook_address) & CRC_SEQ_MASK; //sequence word
+    u64 seqw = ldat_array_read(0x6a0, 1, 0, 0, hook_address)   & CRC_SEQ_MASK;
 
     if (verbose) {
         printf("uop0: 0x%012lx\n", uop0);
         printf("uop1: 0x%012lx\n", uop1);
         printf("uop2: 0x%012lx\n", uop2);
-        printf("seq: 0x%012lx\n", seq);
+        printf("seqw: 0x%08lx\n", seqw);
     }
-    /* #include "ucode/persistent_trace.h" */
 
     unsigned long addr = 0x7c20;
 
@@ -145,7 +144,7 @@ void persistent_trace(u64 hook_address, u64 idx) {
         { UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, (JUMP_DESTINATION) ), READURAM_IMM(TMP0, 0x28), READURAM_IMM(TMP1, 0x29),
             SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC0 }, //0x7c30
 
-        { uop0, uop1, uop2, seq }, //0x7c34
+        { uop0, uop1, uop2, seqw }, //0x7c34
 
         { UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD } //0x7c38
     };
@@ -169,20 +168,8 @@ u64 make_seqw_goto_syncfull(u64 target_addr) {
 }
 void insert_trace(u64 tracing_addr) {
     #include "ucode/trace.h"
-
-    u64 n_tetrads = sizeof(ucode_patch) / sizeof(ucode_patch[0]);
-    u64 seqw_goto = make_seqw_goto_syncfull(tracing_addr);
-    u64 curr_seqw = ucode_patch[n_tetrads-1][3];
-    if (curr_seqw != END_SEQWORD) {
-        printf("[-] The tracing patch has no simple END_SEQWORD at the end\n");
-        exit(EXIT_FAILURE);
-    }
-    ucode_patch[n_tetrads-1][3] = seqw_goto;
-    if (ucode_patch[n_tetrads-1][0] == END_UNKOWN_UOP) ucode_patch[n_tetrads-1][0] = 0;
-    if (ucode_patch[n_tetrads-1][1] == END_UNKOWN_UOP) ucode_patch[n_tetrads-1][1] = 0;
-    if (ucode_patch[n_tetrads-1][2] == END_UNKOWN_UOP) ucode_patch[n_tetrads-1][2] = 0;
     
-    patch_ucode(addr, ucode_patch, n_tetrads);
+    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     hook_match_and_patch(0, tracing_addr, addr);   
 }
 

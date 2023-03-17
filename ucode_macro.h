@@ -34,19 +34,19 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define CRC_SEQ_MASK 0x3FFFFFFFUL
 
 #define IMM_ENCODE_SRC0(src0_id) \
-    ((src0_id & 0xffUL) << 24) | ((src0_id & 0x1f00)<< 10) | ((src0_id & 0xe000) >> 13) | (1 << 3)
+    (((src0_id) & 0xffUL) << 24) | (((src0_id) & 0x1f00)<< 10) | (((src0_id) & 0xe000) >> 13) | (1 << 3)
 
 #define IMM_ENCODE_SRC1(src1_id) \
-    ((src1_id & 0xffUL) << 24) | ((src1_id & 0x1f00)<< 10) | ((src1_id & 0xe000) >> 7) | (1 << 9)
+    (((src1_id) & 0xffUL) << 24) | (((src1_id) & 0x1f00)<< 10) | (((src1_id) & 0xe000) >> 7) | (1 << 9)
 
 #define SRC0_ENCODE(val) \
-    ((val & 0x3f) << 0)
+    (((val) & 0x3f) << 0)
 
 #define SRC1_ENCODE(val) \
-    ((val & 0x3f) << 6)
+    (((val) & 0x3f) << 6)
 
 #define DST_ENCODE(val) \
-    ((val & 0x3f) << 12)
+    (((val) & 0x3f) << 12)
 
 #define CRC_SEQ(seq) \
     (( (seq) & CRC_SEQ_MASK) | ((parity0(seq) << 28) | (parity1(seq) << 29)))
@@ -55,54 +55,71 @@ static inline unsigned long long parity1(unsigned long long value) {
     (( (uop) & CRC_UOP_MASK) | (parity0(uop) << 46) | (parity1(uop) << 47))
 
 #define UJMP(uaddr) \
-    (_UJMP | IMM_ENCODE_SRC1( (uaddr) ))
+    (_UJMP | IMM_ENCODE_SRC1(uaddr))
 
 // reg to reg
 
-#define MOVEFROMCREG_DSZ64_REG(dst, crreg)             \
-    ( ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) ) | IMM_ENCODE_SRC1( (crreg) ))
-
-#define MOVETOCREG_DSZ64(reg, crreg)             \
-    ( _MOVETOCREG_DSZ64 | SRC0_ENCODE( (reg) ) | IMM_ENCODE_SRC1( (crreg) ))
-
-#define MOVE_DSZ64_REG(dst, reg)                                           \
-    ( _MOVE_DSZ64 | DST_ENCODE(dst) | SRC0_ENCODE( (reg) ) )
+#define MOVE_DSZ64_REG(dst, reg) \
+    ( _MOVE_DSZ64 | DST_ENCODE(dst) | SRC0_ENCODE(reg) )
 
 // imm to reg
 
 #define ZEROEXT_DSZ64(dst, imm) \
-    ( _ZEROEXT_DSZ64(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
 
 #define ZEROEXT_DSZ32(dst, imm) \
-    ( _ZEROEXT_DSZ32(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ32 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
 
 #define ZEROEXT_DSZ16(dst, imm) \
-    ( _ZEROEXT_DSZ16(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ16 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
 
 #define ZEROEXT_DSZ8(dst, imm) \
-    ( _ZEROEXT_DSZ8(dst) | IMM_ENCODE_SRC0( (imm) ))
+    ( _ZEROEXT_DSZ8 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
 
-#define MOVE_DSZ64_IMM(dst, imm)                                           \
-    ( _MOVE_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC0( (imm) ))
+#define MOVE_DSZ64_IMM(dst, imm) \
+    ( _MOVE_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
 
-// uram/stagingbuf to reg
-#define READURAM_REG(dst_reg, addr_reg) \
-    ( _READURAM | DST_ENCODE(dst_reg) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
+// creg to reg
 
-#define READURAM_IMM(dst_reg, addr_imm) \
-    ( _READURAM | DST_ENCODE(dst_reg) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
+#define MOVEFROMCREG_DSZ64_IMM(dst, creg_imm) \
+    ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC1(creg_imm) | MOD2)
 
-#define WRITEURAM_IMM(src_reg, addr_imm) \
-    ( _WRITEURAM | SRC0_ENCODE( (src_reg) ) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
+#define MOVEFROMCREG_DSZ64_REG(dst, creg_reg) \
+    ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) | SRC1_ENCODE(creg_reg) | MOD2)
 
-#define WRITEURAM_REG(src_reg, addr_reg) \
-    ( _WRITEURAM | SRC0_ENCODE( (src_reg) ) | SRC1_ENCODE( (addr_reg) ) | MOD2 )
+#define MOVETOCREG_DSZ64_IMM(src, creg_imm) \
+    ( _MOVETOCREG_DSZ64 | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(creg_imm) | MOD2)
 
-#define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, off)             \
-    ( ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) ) | IMM_ENCODE_SRC0( (off) ) | MOD2 )
+#define MOVETOCREG_DSZ64_REG(src, creg_reg) \
+    ( _MOVETOCREG_DSZ64 | SRC0_ENCODE(src) | SRC1_ENCODE(creg_reg) | MOD2)
 
-#define STADSTGBUF_DSZ64_ASZ16_SC1_REG(src, off)             \
-    ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(off) | MOD2 )
+// uram to reg
+
+#define READURAM_IMM(dst, addr_imm) \
+    ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
+
+#define READURAM_REG(dst, addr_reg) \
+    ( _READURAM | DST_ENCODE(dst) | SRC1_ENCODE(addr_reg) | MOD2 )
+
+#define WRITEURAM_IMM(src, addr_imm) \
+    ( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
+
+#define WRITEURAM_REG(src, addr_reg) \
+    ( _WRITEURAM | SRC0_ENCODE(src) | SRC1_ENCODE(addr_reg) | MOD2 )
+
+// stagingbuf to reg
+
+#define LDSTGBUF_DSZ64_ASZ16_SC1_IMM(dst, addr_imm) \
+    ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(addr_imm) | MOD2 )
+
+#define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, addr_reg) \
+    ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) | SRC0_ENCODE(addr_reg) | MOD2 )
+
+#define STADSTGBUF_DSZ64_ASZ16_SC1_IMM(src, addr_imm) \
+    ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(addr_imm) | MOD2 )
+
+#define STADSTGBUF_DSZ64_ASZ16_SC1_REG(src, addr_reg) \
+    ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | SRC0_ENCODE(addr_reg) | MOD2 )
 
 //normal ram to reg
 
@@ -187,14 +204,14 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define UNK256 0x125600000000UL
 
 #define SEQ_UADDR(addr) \
-    ( (addr & 0x7fffUL) << 8 )
+    ( ((addr) & 0x7fffUL) << 8 )
 
-#define SEQ_UP0(u) ( (u & 0b11) << 0 )
-#define SEQ_UP1(u) ( (u & 0b11) << 6 )
-#define SEQ_UP2(u) ( (u & 0b11) << 23 )
+#define SEQ_UP0(u) ( ((u) & 0b11) << 0 )
+#define SEQ_UP1(u) ( ((u) & 0b11) << 6 )
+#define SEQ_UP2(u) ( ((u) & 0b11) << 23 )
 
-#define SEQ_EFLOW(x) (  (x & 0b1111) << 2 )
-#define SEQ_SYNC(x) (  (x & 0b111) << 25 )
+#define SEQ_EFLOW(x) (  ((x) & 0b1111) << 2 )
+#define SEQ_SYNC(x) (  ((x) & 0b111) << 25 )
 
 #define SEQ_CTRL0  ( SEQ_UP0(0) )
 #define SEQ_CTRL1  ( SEQ_UP0(1) )
@@ -293,7 +310,7 @@ static inline unsigned long long parity1(unsigned long long value) {
     SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVE_DSZ64_REG(TMP0, src), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
 
 #define PUSHCREG(creg) \
-    SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVEFROMCREG_DSZ64_REG(TMP0, creg), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
+    SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVEFROMCREG_DSZ64(TMP0, creg), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
 
 #define POPREG(dst) \
     LDZX_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL), MOVE_DSZ64_REG(dst, TMP0), ADD_DSZ64_IMM(RSP, RSP, 0x8)
