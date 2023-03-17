@@ -168,7 +168,7 @@ u64 make_seqw_goto_syncfull(u64 target_addr) {
 }
 void insert_trace(u64 tracing_addr) {
     #include "ucode/trace.h"
-    
+
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     hook_match_and_patch(0, tracing_addr, addr);   
 }
@@ -257,21 +257,21 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             arguments->wait = 1;
             break;
         case 't':
-            arguments->trace_addr = atoi(arg);
+            arguments->trace_addr = strtol(arg, NULL, 0);
             if (arguments->trace_addr < 0){
                 argp_usage(state);
                 exit(EXIT_FAILURE);
             }
             break;
         case 'a':
-            arguments->array = atoi(arg);
+            arguments->array = strtol(arg, NULL, 0);
             if (arguments->array < 0 || arguments->array > 4){
                 argp_usage(state);
                 exit(EXIT_FAILURE);
             }
             break;
         case 'c':
-            arguments->core = atoi(arg);
+            arguments->core = strtol(arg, NULL, 0);
             if (arguments->core < 0 || arguments->core > 3){
                 argp_usage(state);
                 exit(EXIT_FAILURE);
