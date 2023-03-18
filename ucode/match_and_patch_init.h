@@ -1,25 +1,25 @@
-unsigned long addr = 0x7da0;
+unsigned long addr = uget(4);
 unsigned long ucode_patch[][4] = {
-    {   // 0x7da0
+    {   // 0x0
         ZEROEXT_DSZ32(TMP0, 0x0),
         ZEROEXT_DSZ32(TMP9, 0x303),
         SHL_DSZ32_IMM(TMP9, TMP9, 0x8),
         NOP_SEQWORD 
     }, 
-    {   // 0x7da4
+    {   // 0x4
         MOVETOCREG_DSZ64_IMM(TMP9, 0x6a1),
         MOVETOCREG_DSZ64_IMM(TMP0, 0x6a0),
         // write match&patch [0, 0x20]
         WRMSLOOPCTRFBR(0x20),
         NOP_SEQWORD
     },
-    {   // 0x7da8
+    {   // 0x8
         MOVETOCREG_DSZ64_IMM(TMP0, 0x6a4),
         MOVETOCREG_DSZ64_IMM(TMP0, 0x6a4),
         TESTUSTATE_UCODE(UST_MSLOOPCTR_NONZERO),
-        SEQ_GOTO2(0x7da8)
+        SEQ_GOTO2(addr+0x8)
     },
-    {   // 0x7dac
+    {   // 0xc
         MOVETOCREG_DSZ64_IMM(TMP0, 0x6a1),
         ZEROEXT_DSZ32(RAX, 0x1337),
         CONCAT_DSZ16_IMM(RAX, RAX, 0x1337),

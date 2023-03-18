@@ -6,6 +6,24 @@
 
 #include "ucode_macro.h"
 
+unsigned long uget (unsigned long size) {
+    unsigned long uaddr = uram_read(0x68);
+    if (0x7c00 <= uaddr && uaddr + size*4 <= 0x7e00) return uaddr;
+    printf("no space in match and patch\n");
+    exit(-1);
+}
+
+unsigned long ualloc (unsigned long size) {
+    unsigned long uaddr = uget(size);
+    if (uaddr == 0) return 0;
+    uram_write(0x68, uaddr+size*4);
+    return uaddr;
+}
+
+void ureset () {
+    uram_write(0x68, 0x7c00);
+}
+
 u8 verbose = 0;
 
 cpu_set_t set;
@@ -34,6 +52,7 @@ static inline void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) 
 }
 
 void init_match_and_patch(void) {
+    ureset();
     #include "ucode/match_and_patch_init.h"
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     u64 ret = ucode_invoke(addr);
@@ -96,24 +115,26 @@ void do_hlt_patch() {
     hook_match_and_patch(0, hook_address, addr);
 }
 
-#define JUMP_DESTINATION 0x7c10
-void install_jump_target(void) {
-    unsigned long addr = JUMP_DESTINATION;
+unsigned long install_jump_target(void) {
+    static unsigned long addr = 0;
+    if (addr != 0) return addr;
+    addr = ualloc(2);
 
     unsigned long ucode_patch[][4] = {
     { MOVE_DSZ64_IMM(RAX, 0x1234), MOVE_DSZ64_REG(RBX, TMP1), NOP,
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7d00
-        {UNK256, NOP, NOP, END_SEQWORD}, //0x7d04
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, // 0x0
+        {UNK256, NOP, NOP, END_SEQWORD}, // 0x4
     };
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     if (verbose)
         printf("jump_target return value: 0x%lx\n", ucode_invoke(addr));
+    return addr;
 }
 
 void persistent_trace(u64 hook_address, u64 idx) {
-    install_jump_target();
+    unsigned long jump_destination = install_jump_target();
     u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & CRC_UOP_MASK;
     u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & CRC_UOP_MASK;
     u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & CRC_UOP_MASK;
@@ -126,27 +147,27 @@ void persistent_trace(u64 hook_address, u64 idx) {
         printf("seqw: 0x%08lx\n", seqw);
     }
 
-    unsigned long addr = 0x7c20;
+    unsigned long addr = ualloc(7);
 
     unsigned long ucode_patch[][4] = {
         { WRITEURAM_IMM(TMP0, 0x28), WRITEURAM_IMM(TMP1, 0x29), TESTUSTATE_SYS_NOT(0x2),
-            SEQ_GOTO2( (addr + 0x11) ) }, //0x7c20
+            SEQ_GOTO2(addr + 0x11) }, // 0x0
 
         { MOVE_DSZ64_IMM(TMP1, hook_address), MOVE_DSZ64_IMM(TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10),
-            NOP_SEQWORD }, //0x7c24
+            NOP_SEQWORD }, // 0x4
 
         { OR_DSZ64_IMM(TMP0, TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead),
-            NOP_SEQWORD }, //0x7c28
+            NOP_SEQWORD }, // 0x8
 
         { SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), XOR_DSZ64_REG(TMP0, TMP0, RAX),
-            NOP_SEQWORD }, //0x7c2c
+            NOP_SEQWORD }, // 0xc
 
-        { UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, (JUMP_DESTINATION) ), READURAM_IMM(TMP0, 0x28), READURAM_IMM(TMP1, 0x29),
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC0 }, //0x7c30
+        { UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, jump_destination ), READURAM_IMM(TMP0, 0x28), READURAM_IMM(TMP1, 0x29),
+            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC0 }, // 0x10
 
-        { uop0, uop1, uop2, seqw }, //0x7c34
+        { uop0, uop1, uop2, seqw }, // 0x14
 
-        { UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD } //0x7c38
+        { UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD } // 0x18
     };
 
     if (verbose) {

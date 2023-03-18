@@ -1,12 +1,12 @@
-unsigned long addr = 0x7da0;
+unsigned long addr = uget(5);
 unsigned long ucode_patch[][4] = {
-    {   // 0x7da0
+    {   // 0x0
         MOVE_DSZ64_REG(TMP0, RDI), 
         MOVE_DSZ64_REG(TMP1, RSI), 
         ZEROEXT_DSZ32(TMP10, 0x0), 
         NOP_SEQWORD 
     }, 
-    {   // 0x7da4
+    {   // 0x4
         // pause frontend
         MOVEFROMCREG_DSZ64_IMM(TMP12, 0x38c), 
         MOVETOCREG_DSZ64_IMM(TMP10, 0x38c),
@@ -14,19 +14,19 @@ unsigned long ucode_patch[][4] = {
         ZEROEXT_DSZ32(TMP9, 0x303),
         NOP_SEQWORD
     },
-    {   // 0x7da8
+    {   // 0x8
         SHL_DSZ32_IMM(TMP9, TMP9, 0x8),
         MOVETOCREG_DSZ64_IMM(TMP9, 0x6a1),
         MOVETOCREG_DSZ64_IMM(TMP1, 0x6a0),
         NOP_SEQWORD
     },
-    {   // 0x7dac
+    {   // 0xc
         MOVETOCREG_DSZ64_IMM(TMP0, 0x6a4),
         MOVETOCREG_DSZ64_IMM(TMP10, 0x6a4),
         MOVETOCREG_DSZ64_IMM(TMP10, 0x6a1),
         NOP_SEQWORD
     },
-    {   // 0x7db0
+    {   // 0x10
         // restore frontend
         MOVETOCREG_DSZ64_IMM(TMP12, 0x38c),
         ZEROEXT_DSZ32(RAX, 0x1337),
