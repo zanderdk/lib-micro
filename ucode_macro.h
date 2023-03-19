@@ -30,8 +30,8 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 // generic stuff
 
-#define CRC_UOP_MASK 0xFFFFFFFFFFFFLU
-#define CRC_SEQ_MASK 0x3FFFFFFFUL
+#define CRC_UOP_MASK 0x3FFFFFFFFFFFUL
+#define CRC_SEQ_MASK 0xFFFFFFFUL
 
 #define IMM_ENCODE_SRC0(src0_id) \
     (((src0_id) & 0xffUL) << 24) | (((src0_id) & 0x1f00)<< 10) | (((src0_id) & 0xe000) >> 13) | (1 << 3)
@@ -49,10 +49,10 @@ static inline unsigned long long parity1(unsigned long long value) {
     (((val) & 0x3f) << 12)
 
 #define CRC_SEQ(seq) \
-    (( (seq) & CRC_SEQ_MASK) | ((parity0(seq) << 28) | (parity1(seq) << 29)))
+    (( (seq) & CRC_SEQ_MASK) | ((parity0((seq)&CRC_SEQ_MASK) << 28) | (parity1((seq)&CRC_SEQ_MASK) << 29)))
 
 #define CRC_UOP(uop) \
-    (( (uop) & CRC_UOP_MASK) | (parity0(uop) << 46) | (parity1(uop) << 47))
+    (( (uop) & CRC_UOP_MASK) | (parity0((uop)&CRC_UOP_MASK) << 46) | (parity1((uop)&CRC_UOP_MASK) << 47))
 
 #define UJMP(uaddr) \
     (_UJMP | IMM_ENCODE_SRC1(uaddr))
