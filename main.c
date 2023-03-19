@@ -129,24 +129,42 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
         printf("seqw: 0x%08lx\n", seqw);
     }
     unsigned long ucode_patch[][4] = {
-        { TESTUSTATE_SYS_NOT(0x2), STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba00), STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba40),
-            SEQ_GOTO0( (addr + 0x14) ) }, //0x7c20
-
-        { MOVE_DSZ64_IMM(TMP1, hook_address), MOVE_DSZ64_IMM(TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10),
-            NOP_SEQWORD }, //0x7c24
-
-        { OR_DSZ64_IMM(TMP0, TMP0, 0xdead), SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead),
-            NOP_SEQWORD }, //0x7c28
-
-        { SHL_DSZ64_IMM(TMP0, TMP0, 0x10), OR_DSZ64_IMM(TMP0, TMP0, 0xdead), XOR_DSZ64_REG(TMP0, TMP0, RAX),
-            NOP_SEQWORD }, //0x7c2c
-
-        { UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, (JUMP_DESTINATION) ), LDSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba00), LDSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba40),
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC0 }, //0x7c30
-
-        { uop0, uop1, uop2, seqw }, //0x7c34
-
-        { UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD } //0x7c38
+        {   // 0x0
+            UJMP(addr+0x2),
+            UJMP(addr+0x15),
+            TESTUSTATE_SYS_NOT(0x2),
+            SEQ_GOTO2(addr+0x14)
+        },
+        {   // 0x4
+            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba40),
+            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba80),
+            ZEROEXT_DSZ32(TMP0, 0xdead),
+            NOP_SEQWORD
+        },
+        {   // 0x8
+            CONCAT_DSZ16_REG(TMP0, TMP0, TMP0),
+            CONCAT_DSZ32_REG(TMP0, TMP0, TMP0),
+            XOR_DSZ64_REG(TMP0, TMP0, RAX),
+            NOP_SEQWORD
+        },
+        {   // 0xc
+            MOVE_DSZ64_IMM(TMP1, hook_address),
+            NOP,
+            UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, JUMP_DESTINATION),
+            NOP_SEQWORD,
+        },
+        {   // 0x10
+            LDSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba40),
+            LDSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba80),
+            NOP,
+            NOP_SEQWORD,
+        },
+        {   // 0x14
+            uop0, uop1, uop2, seqw
+        },
+        {   // 0x18
+            UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD
+        }
     };
 
     if (verbose) {
@@ -159,7 +177,6 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     hook_match_and_patch(idx, hook_address, addr);
-
 }
 
 u64 make_seqw_goto_syncfull(u64 target_addr) {
