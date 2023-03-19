@@ -10,6 +10,12 @@ typedef int32_t  s32;
 typedef int16_t  s16;
 typedef int8_t   s8;
 
+typedef __int128 int128_t;
+typedef unsigned __int128 uint128_t;
+
+typedef uint128_t u128;
+typedef int128_t s128;
+
 typedef struct {
     u64 value;
     u64 status;
