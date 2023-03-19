@@ -4,6 +4,9 @@
 0048: loope_xlat
 0050: loopne_xlat
 0070: wait_xlat
+00c8: fyl2xp1_xlat
+00e0: lidt_xlat
+00f0: str_xlat
 008e: lfence_wait_uend0
 02b2: acquire_uncore_mutex
 02d8: sidt_xlat
@@ -41,7 +44,6 @@
 0b10: enclu_xlat
 0b50: mcheckret_xlat
 0b58: udbgrd_xlat
-0b90: lidt_xlat
 0ba0: str_m16_xlat
 0bc9: acquire_ipc_mutex
 0bd0: wmptrst_xlat
