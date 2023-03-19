@@ -210,7 +210,7 @@ static struct argp_option options[] = {
     {.name="cpuid", .key='i', .arg=NULL, .flags=0, .doc="patch cpuid"},
     {.name="wait_trace", .key='w', .arg=NULL, .flags=0, .doc="wait for hit on trace"},
     {.name="dump_ram", .key='d', .arg=NULL, .flags=0, .doc="dump uram"},
-    {.name="xlat_fuzz", .key='x', .arg=NULL, .flags=0, .doc="start fuzzing xlats"},
+    {.name="xlat_fuzz", .key='x', .arg="uaddrs", .flags=0, .doc="start fuzzing xlats"},
     {.name="trace", .key='t', .arg="uaddr", .flags=0, .doc="trace ucode addr"},
     {.name="dump_array", .key='a', .arg="array", .flags=0, .doc="dump array"},
     {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
@@ -227,6 +227,8 @@ struct arguments{
     u8 cpuid;
     u8 xlat;
     s32 trace_addr;
+    s32 uaddrs[0x10];
+    u8 uaddr_count;
     s8 array;
     s8 core;
 };
@@ -234,15 +236,13 @@ struct arguments{
 
 // define a function which will parse the args.
 static error_t parse_opt(int key, char *arg, struct argp_state *state){
-
+    char *token;
+    int i;
     struct arguments *arguments = state->input;
     switch(key){
 
         case 'v':
             arguments->verbose = 1;
-            break;
-        case 'x':
-            arguments->xlat = 1;
             break;
         case 'r':
             arguments->reset = 1;
@@ -255,6 +255,18 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             break;
         case 'w':
             arguments->wait = 1;
+            break;
+        case 'x':
+            token = strtok(arg, ",");
+            for (i = 0; i < 0x10 && token != NULL; i++, token = strtok(NULL, ",")) {
+                arguments->uaddrs[i] = strtol(token, NULL, 0);
+                if (arguments->uaddrs[i] < 0) {
+                    argp_usage(state);
+                    exit(EXIT_FAILURE);
+                }
+            }
+            arguments->uaddr_count = i;
+            arguments->xlat = 1;
             break;
         case 't':
             arguments->trace_addr = strtol(arg, NULL, 0);
@@ -302,7 +314,8 @@ cpuinfo_res try_xlat(u64 val) {
     return result;
 }
 
-void xlat_fuzzing(void) {
+void xlat_fuzzing(int* uaddrs, int size) {
+
     staging_write(0xba00, 0x0);
     uram_write(0x2c, 0x0);
 
@@ -315,10 +328,9 @@ void xlat_fuzzing(void) {
     u64 vmclear_xlat = 0x0af8;
     u64 hlt_xlat = 0x0818;
 
-    u64 addrs[] = { vmxon_xlat, 0x40 };
     u64 uaddr = 0x7c20;
-    for (u64 i = 0; i < ARRAY_SZ(addrs); i++) {
-        persistent_trace(uaddr + i * 0x20, addrs[i], i);
+    for (u64 i = 0; i < size; i++) {
+        persistent_trace(uaddr + i * 0x20, uaddrs[i], i);
     }
     /* do_hlt_patch(); */
     cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadUL);
@@ -375,7 +387,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (arguments.xlat) {
-        xlat_fuzzing();
+        xlat_fuzzing(arguments.uaddrs, arguments.uaddr_count);
     }
 
     if (arguments.trace_addr > -1) { // Do trace
