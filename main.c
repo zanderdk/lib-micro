@@ -130,26 +130,26 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
     }
     unsigned long ucode_patch[][4] = {
         {   // 0x0
-            UJMP(addr+0x2),
+            UJMP(addr+0x4),
             UJMP(addr+0x15),
-            TESTUSTATE_SYS_NOT(0x2),
-            SEQ_GOTO2(addr+0x14)
-        },
-        {   // 0x4
-            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba40),
-            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba80),
-            ZEROEXT_DSZ32(TMP0, 0xdead),
+            UJMP(addr+0x16),
             NOP_SEQWORD
         },
+        {   // 0x4
+            TESTUSTATE_SYS_NOT(0x2),
+            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba40),
+            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba80),
+            SEQ_GOTO0(addr+0x14)
+        },
         {   // 0x8
+            ZEROEXT_DSZ32(TMP0, 0xdead),
             CONCAT_DSZ16_REG(TMP0, TMP0, TMP0),
             CONCAT_DSZ32_REG(TMP0, TMP0, TMP0),
-            XOR_DSZ64_REG(TMP0, TMP0, RAX),
             NOP_SEQWORD
         },
         {   // 0xc
+            XOR_DSZ64_REG(TMP0, TMP0, RAX),
             MOVE_DSZ64_IMM(TMP1, hook_address),
-            NOP,
             UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, JUMP_DESTINATION),
             NOP_SEQWORD,
         },
@@ -163,7 +163,7 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
             uop0, uop1, uop2, seqw
         },
         {   // 0x18
-            UJMP(hook_address+4), NOP, NOP, NOP_SEQWORD
+            UJMP(hook_address+4), UJMP(hook_address+5), UJMP(hook_address+6), NOP_SEQWORD
         }
     };
 
