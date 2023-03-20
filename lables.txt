@@ -14,9 +14,14 @@
 0328: vmlaunch_xlat
 0330: vmwrite_r64_mem_xlat
 035a: call_x86_reset_vector
+0380: retf_xlat
+03e0: xchg_xlat
 0428: rdrand_xlat
 0430: rdseed_xlat
 04ae: set_carry_uend
+0598: in_imm_xlat
+05a0: in_dx_xlat
+05b8: out_imm_xlat
 0660: udbgwr_xlat
 06be: jump_tmp3
 06c6: uret1
@@ -53,6 +58,7 @@
 0c52: ipc_cmd_handler_loop
 0c70: mov_r64_cr8_xlat
 0c80: wrmsr_xlat
+0c90: mov_ss_to_xlat
 0ca8: rdtsc_xlat
 0cc0: rdpmc_xlat
 0cd8: vmwrite_r64_r64_xlat
