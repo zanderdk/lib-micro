@@ -166,11 +166,18 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #include "alu_ops.h"
 
-#define SAVEUIP0(addr) \
-    ( _SAVEUIP | SRC0_ENCODE(0) | IMM_ENCODE_SRC0(addr) )
+//wtf both are imm, huh but imm 0 though
+#define SAVEUIP0(addr)                                  \
+    ( _SAVEUIP | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  )
 
-#define SAVEUIP1(addr) \
-    ( _SAVEUIP | SRC0_ENCODE(1) | IMM_ENCODE_SRC0(addr) )
+#define SAVEUIP1(addr)                                  \
+    ( _SAVEUIP | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
+
+#define SAVEUIP0_DST(dst, addr)                                  \
+    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  )
+
+#define SAVEUIP1_DST(dst, addr)                                  \
+    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
 
 #define UST_MSLOOPCTR_NONZERO 1
 
