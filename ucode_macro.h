@@ -168,16 +168,16 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 //wtf both are imm, huh but imm 0 though
 #define SAVEUIP0(addr)                                  \
-    ( _SAVEUIP | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  )
+    ( _SAVEUIP | IMM_ENCODE_SRC1( ( addr ) ) | IMM_ENCODE_SRC0(0)  )
 
 #define SAVEUIP1(addr)                                  \
-    ( _SAVEUIP | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
+    ( _SAVEUIP | IMM_ENCODE_SRC1( ( addr ) ) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
 
 #define SAVEUIP0_DST(dst, addr)                                  \
-    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  )
+    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  )
 
 #define SAVEUIP1_DST(dst, addr)                                  \
-    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1(addr) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
+    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
 
 #define UST_MSLOOPCTR_NONZERO 1
 
@@ -277,6 +277,18 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #define SEQ_UEND3(idx) \
     ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) )
+
+#define SEQ_SAVEUIP0(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0x4) )
+
+#define SEQ_SAVEUIP1(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0x5) )
+
+#define SEQ_SAVEUIP0_REGOVER(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0x6) )
+
+#define SEQ_SAVEUIP1_REGOVER(idx) \
+    ( SEQ_UP0(idx) | SEQ_EFLOW(0x7) )
 
 #define SEQ_UEND0_0 \
     ( SEQ_UEND0(0) )
