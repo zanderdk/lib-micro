@@ -208,7 +208,25 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define TESTUSTATE_MSLOOP \
     ( TESTUSTATE_UCODE(1) )
 
+#define URET0 \
+    ( _URET )
+
+#define URET1 \
+    ( _URET | MOD0 )
+
 #define UNK256 0x125600000000UL
+
+#define FLOW_CTRL_UNK (0x01 << 24)
+#define FLOW_CTRL_URET0 (0x0a << 24)
+#define FLOW_CTRL_URET1 (0x0b << 24)
+#define FLOW_CTRL_LDAT_IN (0x0d << 24)
+#define FLOW_CTRL_MSLOOPCTR (0x0e << 24)
+#define FLOW_CTRL_USTATE (0x0f << 24)
+
+#define UFLOWCTRL_REG(reg, uop) \
+    ( _UFLOWCTRL | uop | SRC1_ENCODE(reg) )
+
+//Sequence word here:
 
 #define SEQ_UADDR(addr) \
     ( ((addr) & 0x7fffUL) << 8 )
@@ -300,22 +318,22 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( SEQ_UEND0(2) )
 
 #define SEQ_URET0_0 \
-    ( SEQ_UP0(0) | SEQ_EFLOW(0x2) | SEQ_SYNC(1) )
+    ( SEQ_UP0(0) | SEQ_EFLOW(0x2) )
 
 #define SEQ_URET0_1 \
-    ( SEQ_UP0(1) | SEQ_EFLOW(0x2) | SEQ_SYNC(1) )
+    ( SEQ_UP0(1) | SEQ_EFLOW(0x2) )
 
 #define SEQ_URET0_2 \
-    ( SEQ_UP0(2) | SEQ_EFLOW(0x2) | SEQ_SYNC(1) )
+    ( SEQ_UP0(2) | SEQ_EFLOW(0x2) )
 
 #define SEQ_URET1_0 \
-    ( SEQ_UP0(0) | SEQ_EFLOW(0x3) | SEQ_SYNC(1) )
+    ( SEQ_UP0(0) | SEQ_EFLOW(0x3) )
 
 #define SEQ_URET1_1 \
-    ( SEQ_UP0(1) | SEQ_EFLOW(0x3) | SEQ_SYNC(1) )
+    ( SEQ_UP0(1) | SEQ_EFLOW(0x3) )
 
 #define SEQ_URET1_2 \
-    ( SEQ_UP0(2) | SEQ_EFLOW(0x3) | SEQ_SYNC(1) )
+    ( SEQ_UP0(2) | SEQ_EFLOW(0x3) )
 
 #define NOP_SEQWORD (0x0000300000c0uL)
 
