@@ -105,7 +105,7 @@ void install_jump_target(void) {
 
     unsigned long ucode_patch[][4] = {
     { MOVE_DSZ64_IMM(RAX, 0x1234), MOVE_DSZ64_REG(RBX, TMP1), NOP,
-            SEQ_NEXT | SEQ_SYNCWTMRK | SEQ_SYNC2 }, //0x7d00
+            SEQ_NEXT | SEQ_SYNCWTMRK(2) }, //0x7d00
         {UNK256, NOP, NOP, END_SEQWORD}, //0x7d04
     };
     if (verbose)

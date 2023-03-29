@@ -147,6 +147,13 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define LDZX_DSZ8_ASZ32_SC1(dst, seg, src, mode) \
     ( _LDZX_DSZ8_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
+// test read ram
+
+#define LDTICKLE_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
+    ( _LDTICKLE_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+
+
+
 // write normal ram
 #define STAD_DSZ64_ASZ32_SC1(src2, seg, src, mode) \
     ( _STAD_DSZ64_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
@@ -187,6 +194,21 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define UPDATEUSTATE_UCODE(testbits)        \
     ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) )
 
+#define UPDATEUSTATE_SYS(testbits)        \
+    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 )
+
+#define UPDATEUSTATE_VMX(testbits)        \
+    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2)
+
+#define UPDATEUSTATE_UCODE_NOT(testbits)        \
+    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD0 )
+
+#define UPDATEUSTATE_SYS_NOT(testbits)        \
+    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD0 )
+
+#define UPDATEUSTATE_VMX_NOT(testbits)        \
+    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2 | MOD0 )
+
 #define TESTUSTATE_UCODE(testbits)        \
     ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) )
 
@@ -214,7 +236,7 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define URET1 \
     ( _URET | MOD0 )
 
-#define UNK256 0x125600000000UL
+#define UNK256 ( (0x256UL << 32) | MOD1 )
 
 #define FLOW_CTRL_UNK (0x01 << 24)
 #define FLOW_CTRL_URET0 (0x0a << 24)
@@ -228,119 +250,49 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 //Sequence word here:
 
-#define SEQ_UADDR(addr) \
-    ( ((addr) & 0x7fffUL) << 8 )
+#define SEQ_UADDR(addr) ( ((addr) & 0x7fffUL) << 8 )
 
-#define SEQ_UP0(u) ( ((u) & 0b11) << 0 )
-#define SEQ_UP1(u) ( ((u) & 0b11) << 6 )
-#define SEQ_UP2(u) ( ((u) & 0b11) << 23 )
+#define SEQ_UP0(u)      ( ((u) & 0b11) << 0 )
+#define SEQ_UP1(u)      ( ((u) & 0b11) << 6 )
+#define SEQ_UP2(u)      ( ((u) & 0b11) << 23 )
 
-#define SEQ_EFLOW(x) (  ((x) & 0b1111) << 2 )
-#define SEQ_SYNC(x) (  ((x) & 0b111) << 25 )
+#define SEQ_EFLOW(x)    ( ((x) & 0b1111) << 2 )
+#define SEQ_SYNC(x)     ( ((x) & 0b111) << 25 )
 
-#define SEQ_CTRL0  ( SEQ_UP0(0) )
-#define SEQ_CTRL1  ( SEQ_UP0(1) )
-#define SEQ_CTRL2  ( SEQ_UP0(2) )
+// idx controls which uop in triad to target
 
-/* #define SEQ_END0  ( SEQ_UP1(0) ) */
-/* #define SEQ_END1  ( SEQ_UP1(1) ) */
-/* #define SEQ_END2  ( SEQ_UP1(2) ) */
+#define SEQ_URET0(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0x2) )
+#define SEQ_URET1(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0x3) )
+#define SEQ_SAVEUIP0(idx)           ( SEQ_UP0(idx) | SEQ_EFLOW(0x4) )
+#define SEQ_SAVEUIP1(idx)           ( SEQ_UP0(idx) | SEQ_EFLOW(0x5) )
+#define SEQ_SAVEUIP0_REGOVR(idx)    ( SEQ_UP0(idx) | SEQ_EFLOW(0x6) )
+#define SEQ_SAVEUIP1_REGOVR(idx)    ( SEQ_UP0(idx) | SEQ_EFLOW(0x7) )
+#define SEQ_WRTAGW(idx)             ( SEQ_UP0(idx) | SEQ_EFLOW(0x8) )
+#define SEQ_MSLOOP(idx)             ( SEQ_UP0(idx) | SEQ_EFLOW(0x9) )
+#define SEQ_MSSTOP(idx)             ( SEQ_UP0(idx) | SEQ_EFLOW(0xb) )
+#define SEQ_UEND0(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xc) )
+#define SEQ_UEND1(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xd) )
+#define SEQ_UEND2(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xe) )
+#define SEQ_UEND3(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) )
 
-#define SEQ_SYNC0  ( SEQ_UP2(0) )
-#define SEQ_SYNC1  ( SEQ_UP2(1) )
-#define SEQ_SYNC2  ( SEQ_UP2(2) )
+#define SEQ_GOTO0(addr)     ( SEQ_UP1(0) | SEQ_UADDR(addr) )
+#define SEQ_GOTO1(addr)     ( SEQ_UP1(1) | SEQ_UADDR(addr) )
+#define SEQ_GOTO2(addr)     ( SEQ_UP1(2) | SEQ_UADDR(addr) )
 
-#define NO_SYNC SEQ_UP2(3)
+#define SEQ_LFNCEWAIT(idx)  ( SEQ_UP2(idx) | SEQ_SYNC(1) )
+#define SEQ_LFNCEMARK(idx)  ( SEQ_UP2(idx) | SEQ_SYNC(2) )
+#define SEQ_LFNCEWTMRK(idx) ( SEQ_UP2(idx) | SEQ_SYNC(3) )
+#define SEQ_SYNCFULL(idx)   ( SEQ_UP2(idx) | SEQ_SYNC(4) )
+#define SEQ_SYNCWAIT(idx)   ( SEQ_UP2(idx) | SEQ_SYNC(5) )
+#define SEQ_SYNCMARK(idx)   ( SEQ_UP2(idx) | SEQ_SYNC(6) )
+#define SEQ_SYNCWTMRK(idx)  ( SEQ_UP2(idx) | SEQ_SYNC(7) )
 
+// shortcuts
+#define SEQ_NEXT    SEQ_UP1(3)
+#define SEQ_NOSYNC  SEQ_UP2(3)
 
-#define SEQ_NEXT \
-    SEQ_UP1(3)
-
-//CTRL idx controls URET UEND USAVEUIP
-//END idx controls GOTO
-//SYNC idx controls sync doh
-
-#define SEQ_SEQUENTIAL (SEQ_SYNC(0))
-
-#define SEQ_LFNCEWAIT  (SEQ_SYNC(1))
-#define SEQ_LFNCEMARK  (SEQ_SYNC(2))
-#define SEQ_LFNCEWTMRK (SEQ_SYNC(3))
-
-#define SEQ_SYNCFULL   (SEQ_SYNC(4))
-#define SEQ_SYNCWAIT   (SEQ_SYNC(5))
-#define SEQ_SYNCMARK   (SEQ_SYNC(6))
-#define SEQ_SYNCWTMRK  (SEQ_SYNC(7))
-
-#define SEQ_WRTAGW     (SEQ_EFLOW(8))
-#define SEQ_MSLOOP     (SEQ_EFLOW(9))
-#define SEQ_MSSTOP     (SEQ_EFLOW(0xb))
-
-#define SEQ_GOTO0(addr) \
-    ( SEQ_CTRL0 | SEQ_UP1(0) | NO_SYNC | SEQ_UADDR(addr) )
-
-#define SEQ_GOTO1(addr) \
-    ( SEQ_CTRL0 | SEQ_UP1(1) | NO_SYNC | SEQ_UADDR(addr) )
-
-#define SEQ_GOTO2(addr) \
-    ( SEQ_CTRL0 | SEQ_UP1(2) | NO_SYNC | SEQ_UADDR(addr) )
-
-#define SEQ_UEND0(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xc) )
-
-#define SEQ_UEND1(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xd) )
-
-#define SEQ_UEND2(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xe) )
-
-#define SEQ_UEND3(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) )
-
-#define SEQ_SAVEUIP0(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0x4) )
-
-#define SEQ_SAVEUIP1(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0x5) )
-
-#define SEQ_SAVEUIP0_REGOVER(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0x6) )
-
-#define SEQ_SAVEUIP1_REGOVER(idx) \
-    ( SEQ_UP0(idx) | SEQ_EFLOW(0x7) )
-
-#define SEQ_UEND0_0 \
-    ( SEQ_UEND0(0) )
-
-#define SEQ_UEND0_1 \
-    ( SEQ_UEND0(1) )
-
-#define SEQ_UEND0_2 \
-    ( SEQ_UEND0(2) )
-
-#define SEQ_URET0_0 \
-    ( SEQ_UP0(0) | SEQ_EFLOW(0x2) )
-
-#define SEQ_URET0_1 \
-    ( SEQ_UP0(1) | SEQ_EFLOW(0x2) )
-
-#define SEQ_URET0_2 \
-    ( SEQ_UP0(2) | SEQ_EFLOW(0x2) )
-
-#define SEQ_URET1_0 \
-    ( SEQ_UP0(0) | SEQ_EFLOW(0x3) )
-
-#define SEQ_URET1_1 \
-    ( SEQ_UP0(1) | SEQ_EFLOW(0x3) )
-
-#define SEQ_URET1_2 \
-    ( SEQ_UP0(2) | SEQ_EFLOW(0x3) )
-
-#define NOP_SEQWORD (0x0000300000c0uL)
-
-/* #define END_SEQWORD (0x90000F2) */
-#define END_SEQWORD (0x130000f2ul)
-
-#define END_UNKOWN_UOP (0x125600000000uL)
+#define NOP_SEQWORD ( SEQ_NEXT | SEQ_NOSYNC )
+#define END_SEQWORD ( SEQ_UEND0(2) | SEQ_NEXT | SEQ_LFNCEWAIT(2) )
 
 // helpers
 #define PUSHREG(src) \
