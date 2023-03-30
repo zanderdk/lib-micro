@@ -7,8 +7,8 @@
 
 #include "misc.h"
 #include "ldat.h"
-#include "main.h"
 #include "dump.h"
+#include "patch.h"
 
 #include "ucode_macro.h"
 
@@ -16,74 +16,6 @@
     sizeof(arr)/sizeof(arr[0])
 
 u8 verbose = 0;
-
-
-void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) {
-    // format: uop0, uop1, uop2, seqword
-    // uop3 is fixed to a nop and cannot be overridden
-    for (int i = 0; i < n; i++) {
-        // patch ucode
-        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+0, CRC_UOP(ucode_patch[i][0]));
-        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+1, CRC_UOP(ucode_patch[i][1]));
-        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+2, CRC_UOP(ucode_patch[i][2]));
-        // patch seqword
-        ms_rw_seq_write(ucode_addr_to_patch_seqword_addr(addr) + i, CRC_SEQ(ucode_patch[i][3]));
-    }
-}
-
-void init_match_and_patch(void) {
-    #include "ucode/match_and_patch_init.h"
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
-    u64 ret = ucode_invoke(addr);
-    if (verbose)
-        printf("init_match_and_patch: %lx\n", ret);
-    enable_match_and_patch();
-}
-
-void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch_addr) {
-    if (ucode_addr % 2 != 0) {
-        printf("[-] uop address must be even\n");
-        return;
-    }
-    if (patch_addr % 2 != 0 || patch_addr < 0x7c00) {
-        printf("[-] patch uop address must be even and >0x7c00\n");
-        return;
-    }
-
-    //TODO: try to hook odd addresses!!
-    u64 poff = (patch_addr - 0x7c00) / 2;
-    u64 patch_value = 0x3e000000 | (poff << 16) | ucode_addr | 1;
-    
-    #include "ucode/match_and_patch_hook.h"
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
-    u64 ret = ucode_invoke_2(addr, patch_value, entry_idx<<1);
-    if (verbose)
-        printf("hook_match_and_patch: %lx\n", ret);
-}
-
-u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr) {
-    #include "ucode/ldat_read.h"
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
-    u64 array_bank_sel = 0x10000 | ((dword_idx & 0xf) << 12) | ((array_sel & 0xf) << 8) | (bank_sel & 0xf);
-    u64 res = ucode_invoke_3(addr, pdat_reg, array_bank_sel, 0xc00000 | fast_addr);
-    return res;
-}
-
-void do_fix_IN_patch() {
-    #include "ucode/fix_in.h"
-    if (verbose)
-        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
-    hook_match_and_patch(0x1f, hook_address, addr);
-}
-
-void do_cpuid_patch() {
-    #include "ucode/cpuid.h"
-    if (verbose)
-        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
-    hook_match_and_patch(0, hook_address, addr);
-}
 
 void do_hlt_patch() {
     #include "ucode/hlt.h"
@@ -184,31 +116,6 @@ void insert_trace(u64 tracing_addr) {
     hook_match_and_patch(0, tracing_addr, addr);   
 }
 
-typedef struct {
-    u64 rax;
-    u64 rbx;
-    u64 rcx;
-    u64 rdx;
-} cpuinfo_res;
-
-
-cpuinfo_res cpuinfo(u64 arg1) {
-    volatile u64 rax = arg1;
-    cpuinfo_res result;
-    lmfence();
-    asm volatile(
-        "cpuid\n\t"
-        : "=a" (result.rax)
-        , "=b" (result.rbx)
-        , "=c" (result.rcx)
-        , "=d" (result.rdx)
-        : "a" (rax)
-        : "rdi", "rsi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
-    );
-    lmfence();
-    return result;
-}
-
 const char *argp_program_version = "custom-cpu v0.1";
 static char doc[] = "Tool for patching ucode";
 static char args_doc[] = "";
@@ -217,7 +124,6 @@ static char args_doc[] = "";
 static struct argp_option options[] = {
     {.name="verbose", .key='v', .arg=NULL, .flags=0, .doc="Produce verbose output"},
     {.name="reset", .key='r', .arg=NULL, .flags=0, .doc="reset match & patch"},
-    {.name="cpuid", .key='i', .arg=NULL, .flags=0, .doc="patch cpuid"},
     {.name="wait_trace", .key='w', .arg=NULL, .flags=0, .doc="wait for hit on trace"},
     {.name="dump_ram", .key='d', .arg=NULL, .flags=0, .doc="dump uram"},
     {.name="xlat_fuzz", .key='x', .arg="uaddrs", .flags=0, .doc="start fuzzing xlats"},
@@ -234,7 +140,6 @@ struct arguments{
     u8 reset;
     u8 uram;
     u8 wait;
-    u8 cpuid;
     u8 xlat;
     s32 trace_addr;
     s32 uaddrs[0x10];
@@ -256,9 +161,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             break;
         case 'r':
             arguments->reset = 1;
-            break;
-        case 'i':
-            arguments->cpuid = 1;
             break;
         case 'd':
             arguments->uram = 1;
@@ -307,9 +209,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
     return 0;
 }
 
-cpuinfo_res try_xlat(u64 val) {
+genral_purpose_regs try_xlat(u64 val) {
     u64 rax = val;
-    cpuinfo_res result;
+    genral_purpose_regs result;
     lmfence();
     asm volatile(
         "vmxon [rbx]\n\t"
@@ -343,7 +245,7 @@ void xlat_fuzzing(int* uaddrs, int size) {
         persistent_trace(uaddr + i * 0x20, uaddrs[i], i);
     }
     /* do_hlt_patch(); */
-    cpuinfo_res val = try_xlat(0xdeaddeaddeaddeadUL);
+    genral_purpose_regs val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
     printf("rcx:        0x%lx\n", val.rcx);
@@ -373,7 +275,6 @@ int main(int argc, char* argv[]) {
         puts("arguments:");
         printf("\tverbose:       %d\n", arguments.verbose);
         printf("\treset:         %d\n", arguments.reset);
-        printf("\tcpuid:         %d\n", arguments.cpuid);
         printf("\txlat:          %d\n", arguments.xlat);
         printf("\ttrace_addr:    0x%x\n", (u32)arguments.trace_addr);
         printf("\twait:          %d\n", arguments.wait);
@@ -416,16 +317,7 @@ int main(int argc, char* argv[]) {
             printf("\nPath not hit\n");
         }
     }
-        
-    if (arguments.cpuid) { // Patch cpuid
-        do_cpuid_patch();
 
-        if (verbose) {
-            cpuinfo_res result = cpuinfo(0x80000002);
-            printf("cpuinfo: 0x%016lx 0x%016lx 0x%016lx 0x%016lx\n", result.rax, result.rbx, result.rcx, result.rdx);
-        }
-    }
-    
     if (arguments.array > -1) { // Dump array
         u8 array_idx = arguments.array;
         if (array_idx == 0) {

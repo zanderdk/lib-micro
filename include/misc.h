@@ -24,6 +24,13 @@ typedef unsigned __int128 uint128_t;
 typedef uint128_t u128;
 typedef int128_t s128;
 
+typedef struct {
+    u64 rax;
+    u64 rbx;
+    u64 rcx;
+    u64 rdx;
+} genral_purpose_regs;
+
 #define mfence() asm volatile("mfence\n")
 #define lfence() asm volatile("lfence\n")
 #define lmfence() asm volatile("lfence\n mfence\n")
