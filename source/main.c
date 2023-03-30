@@ -12,9 +12,6 @@
 
 #include "ucode_macro.h"
 
-#define ARRAY_SZ(arr) \
-    sizeof(arr)/sizeof(arr[0])
-
 u8 verbose = 0;
 
 void do_hlt_patch() {

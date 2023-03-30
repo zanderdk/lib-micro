@@ -31,6 +31,9 @@ typedef struct {
     u64 rdx;
 } genral_purpose_regs;
 
+#define ARRAY_SZ(arr) \
+    sizeof(arr)/sizeof(arr[0])
+
 #define mfence() asm volatile("mfence\n")
 #define lfence() asm volatile("lfence\n")
 #define lmfence() asm volatile("lfence\n mfence\n")
