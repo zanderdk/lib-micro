@@ -1,8 +1,8 @@
 #define _GNU_SOURCE
 
-#include "main.h"
 #include <argp.h>
 #include <string.h>
+#include "main.h"
 
 #include "ucode_macro.h"
 
@@ -22,8 +22,7 @@ void assign_to_core(int core_id) {
     }
 }
 
-__attribute__((always_inline))
-static inline void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) {
+void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) {
     // format: uop0, uop1, uop2, seqword
     // uop3 is fixed to a nop and cannot be overridden
     for (int i = 0; i < n; i++) {
@@ -45,7 +44,7 @@ void init_match_and_patch(void) {
     enable_match_and_patch();
 }
 
-static inline void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch_addr) {
+void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch_addr) {
     if (ucode_addr % 2 != 0) {
         printf("[-] uop address must be even\n");
         return;
@@ -66,8 +65,7 @@ static inline void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch
         printf("hook_match_and_patch: %lx\n", ret);
 }
 
-__attribute__((always_inline))
-static inline u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr) {
+u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr) {
     #include "ucode/ldat_read.h"
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     u64 array_bank_sel = 0x10000 | ((dword_idx & 0xf) << 12) | ((array_sel & 0xf) << 8) | (bank_sel & 0xf);
@@ -198,8 +196,7 @@ typedef struct {
 } cpuinfo_res;
 
 
-__attribute__((always_inline))
-cpuinfo_res static inline cpuinfo(u64 arg1) {
+cpuinfo_res cpuinfo(u64 arg1) {
     volatile u64 rax = arg1;
     cpuinfo_res result;
     lmfence();

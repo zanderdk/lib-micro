@@ -12,19 +12,15 @@
 #include <sys/io.h>
 #include "udbg.h"
 
-__attribute__((always_inline))
-u64 static inline sa_write_opcode(u64 addr, u64 value, uint32_t opcode) {
+u64 sa_write_opcode(u64 addr, u64 value, uint32_t opcode) {
     return (u64)udbgwr(0xC8, addr, (uint64_t)value | ((uint64_t)opcode << 32)).status;
 }
 
-__attribute__((always_inline))
-static inline void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n);
+void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n);
 
-__attribute__((always_inline))
-static inline u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr);
+u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr);
 
-__attribute__((always_inline))
-static inline void ldat_array_write(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val) {
+void ldat_array_write(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val) {
     u64 prev = crbus_read(0x692);
     crbus_write(0x692, prev | 1);
 
@@ -38,12 +34,11 @@ static inline void ldat_array_write(u64 pdat_reg, u64 array_sel, u64 bank_sel, u
 }
 
 
-__attribute__((always_inline))
-static inline void ms_array_write(u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val) {
+void ms_array_write(u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val) {
     ldat_array_write(0x6a0, array_sel, bank_sel, dword_idx, fast_addr, val);
 }
 
-static inline u64 ms_array_read(u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr) {
+u64 ms_array_read(u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr) {
     return ldat_array_read(0x6a0, array_sel, bank_sel, dword_idx, fast_addr);
 }
 
@@ -58,57 +53,47 @@ static inline u64 ms_array_read(u64 array_sel, u64 bank_sel, u64 dword_idx, u64 
 
 //read funcs:
 //
-__attribute__((always_inline))
-static inline u64 ms_patch_ram_read(u64 addr) {
+u64 ms_patch_ram_read(u64 addr) {
     return ms_array_read(4, 0, 0, addr);
 }
  
-__attribute__((always_inline))
-static inline u64 ms_match_patch_read(u64 addr) {
+u64 ms_match_patch_read(u64 addr) {
     return ms_array_read(3, 0, 0, addr);
 }
 
-__attribute__((always_inline))
-static inline u64 ms_const_read(u64 addr) {
+u64 ms_const_read(u64 addr) {
     return ms_array_read(2, 0, 0, addr);
 }
 
-__attribute__((always_inline))
-static inline u64 ms_array1_read(u64 addr) {
+u64 ms_array1_read(u64 addr) {
     return ms_array_read(1, 0, 0, addr);
 }
 
-__attribute__((always_inline))
-static inline u64 ms_array0_read(u64 addr) {
+u64 ms_array0_read(u64 addr) {
     return ms_array_read(0, 0, 0, addr);
 }
 
 //write funcs:
-__attribute__((always_inline))
-static inline void ms_patch_ram_write(u64 addr, u64 val) {
+void ms_patch_ram_write(u64 addr, u64 val) {
     ms_array_write(4, 0, 0, addr, val);
 }
 
-__attribute__((always_inline))
-static inline void ms_match_patch_write(u64 addr, u64 val) {
+void ms_match_patch_write(u64 addr, u64 val) {
     ms_array_write(3, 0, 0, addr, val);
 }
 
-__attribute__((always_inline))
-static inline void ms_const_write(u64 addr, u64 val) {
+void ms_const_write(u64 addr, u64 val) {
     ms_array_write(2, 0, 0, addr, val);
 }
 
-__attribute__((always_inline))
-static inline u64 ucode_addr_to_patch_addr(u64 addr) {
+u64 ucode_addr_to_patch_addr(u64 addr) {
     u64 base = addr - 0x7c00;
     // the last *4 does not make any sense but the CPU divides the address where
     // to write by for, still unkown reasons
     return ((base%4) * 0x80 + (base/4)) * 4;
 }
 
-__attribute__((always_inline))
-static inline u64 patch_addr_to_ucode_addr(u64 addr) {
+u64 patch_addr_to_ucode_addr(u64 addr) {
     // NOTICE: the ucode_addr_to_patch_addr has a *4 more, so this will not be
     // the inverse
     u64 mul = addr % 0x80;
@@ -116,8 +101,7 @@ static inline u64 patch_addr_to_ucode_addr(u64 addr) {
     return 0x7c00 + mul*4 + off;
 }
 
-__attribute__((always_inline))
-static inline u64 ucode_addr_to_patch_seqword_addr(u64 addr) {
+u64 ucode_addr_to_patch_seqword_addr(u64 addr) {
     u64 base = addr - 0x7c00;
     u64 seq_addr = ((base%4) * 0x80 + (base/4));
     return seq_addr % 0x80;
@@ -182,8 +166,5 @@ void uram_dump(void) {
         printf("%04lx: %016lx %016lx %016lx %016lx\n", i, val0, val1, val2, val3);
     }
 }
-
-
-
 
 #endif // MAIN_H_
