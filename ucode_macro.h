@@ -34,10 +34,10 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define CRC_SEQ_MASK 0xFFFFFFFUL
 
 #define IMM_ENCODE_SRC0(src0_id) \
-    (((src0_id) & 0xffUL) << 24) | (((src0_id) & 0x1f00)<< 10) | (((src0_id) & 0xe000) >> 13) | (1 << 3)
+    ( (((src0_id) & 0xffUL) << 24) | (((src0_id) & 0x1f00)<< 10) | (((src0_id) & 0xe000) >> 13) | (1 << 3) )
 
 #define IMM_ENCODE_SRC1(src1_id) \
-    (((src1_id) & 0xffUL) << 24) | (((src1_id) & 0x1f00)<< 10) | (((src1_id) & 0xe000) >> 7) | (1 << 9)
+    ( (((src1_id) & 0xffUL) << 24) | (((src1_id) & 0x1f00)<< 10) | (((src1_id) & 0xe000) >> 7) | (1 << 9) )
 
 #define SRC0_ENCODE(val) \
     (((val) & 0x3f) << 0)
@@ -175,10 +175,10 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 //wtf both are imm, huh but imm 0 though
 #define SAVEUIP0(addr)                                  \
-    ( _SAVEUIP | IMM_ENCODE_SRC1( ( addr ) ) | IMM_ENCODE_SRC0(0)  )
+    ( _SAVEUIP | IMM_ENCODE_SRC1( addr ) | IMM_ENCODE_SRC0(0)  )
 
 #define SAVEUIP1(addr)                                  \
-    ( _SAVEUIP | IMM_ENCODE_SRC1( ( addr ) ) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
+    ( _SAVEUIP | IMM_ENCODE_SRC1( addr ) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
 
 #define SAVEUIP0_DST(dst, addr)                                  \
     ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  )
