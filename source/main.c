@@ -2,7 +2,13 @@
 
 #include <argp.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "misc.h"
+#include "ldat.h"
 #include "main.h"
+#include "dump.h"
 
 #include "ucode_macro.h"
 
@@ -11,27 +17,17 @@
 
 u8 verbose = 0;
 
-cpu_set_t set;
-void assign_to_core(int core_id) {
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(core_id, &cpuset);
-    if (sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset) != 0){
-        puts("assign_to_core");
-        exit(-1);
-    }
-}
 
 void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) {
     // format: uop0, uop1, uop2, seqword
     // uop3 is fixed to a nop and cannot be overridden
     for (int i = 0; i < n; i++) {
         // patch ucode
-        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+0, CRC_UOP(ucode_patch[i][0]));
-        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+1, CRC_UOP(ucode_patch[i][1]));
-        ms_patch_ram_write(ucode_addr_to_patch_addr(addr + i*4)+2, CRC_UOP(ucode_patch[i][2]));
+        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+0, CRC_UOP(ucode_patch[i][0]));
+        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+1, CRC_UOP(ucode_patch[i][1]));
+        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+2, CRC_UOP(ucode_patch[i][2]));
         // patch seqword
-        ms_const_write(ucode_addr_to_patch_seqword_addr(addr) + i, CRC_SEQ(ucode_patch[i][3]));
+        ms_rw_seq_write(ucode_addr_to_patch_seqword_addr(addr) + i, CRC_SEQ(ucode_patch[i][3]));
     }
 }
 

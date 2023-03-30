@@ -8,7 +8,6 @@ typedef struct {
 } u_result_t;
 
 u_result_t udbgrd(uint64_t type, uint64_t addr);
-
 u_result_t udbgwr(uint64_t type, uint64_t addr, uint64_t value);
 
 #define SIMPLERD(name, type) \

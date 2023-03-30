@@ -1,6 +1,13 @@
+#define _GNU_SOURCE
+
 #ifndef MISC_H_
 #define MISC_H_
 #include <stdint.h>
+#include <sched.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <error.h>
 
 typedef uint64_t u64;
 typedef uint32_t u32;
@@ -21,5 +28,14 @@ typedef int128_t s128;
 #define lfence() asm volatile("lfence\n")
 #define lmfence() asm volatile("lfence\n mfence\n")
 #define wbinvd() asm volatile("wbinvd\n")
+
+void static assign_to_core(int core_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core_id, &cpuset);
+    if (sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset) != 0){
+        error(EXIT_FAILURE, -1, "assign to specifi core failed.");
+    }
+}
 
 #endif // MISC_H_
