@@ -3,7 +3,7 @@ CFLAGS = -O0 -Wno-unused-function -Wno-unused-variable -static -ggdb -Wall -masm
 
 SOURCES = $(wildcard source/*.c)
 OBJECTS = $(SOURCES:.c=.o)
-HEADERS = $(wildcard include.c) $(wildcard include/ucode/.c)
+HEADERS = $(wildcard include/*.h) $(wildcard include/ucode/*.h)
 
 TARGET = build/main
 
