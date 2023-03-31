@@ -13,27 +13,27 @@ void ms_array_dump(u64 array_sel, u64 fast_addr, u64 size) {
     }
 }
 
-void ms_ro_dump(void){
+void ms_ro_code_dump(void){
     puts("array 00:");
     ms_array_dump(0, 0, 0x8000);
 }
 
-void ms_irom_dump(void){
+void ms_ro_seqw_dump(void){
     puts("array 01:");
     ms_array_dump(1, 0, 0x8000);
 }
 
-void ms_patch_consts_dump(void){
+void ms_rw_seqw_dump(void){
     puts("array 02:");
     ms_array_dump(2, 0, 0x80);
 }
 
-void ms_match_patch_regs_dump(void){
+void ms_match_n_patch_dump(void){
     puts("array 03:");
     ms_array_dump(3, 0, 0x20);
 }
 
-void ms_patch_ram_dump(void){
+void ms_rw_code_dump(void){
     puts("array 04:");
     ms_array_dump(4, 0, 0x200);
 }
