@@ -318,15 +318,15 @@ int main(int argc, char* argv[]) {
     if (arguments.array > -1) { // Dump array
         u8 array_idx = arguments.array;
         if (array_idx == 0) {
-            ms_rom_dump();
+            ms_ro_code_dump();
         } else if (array_idx == 1) {
-            ms_irom_dump();
+            ms_ro_seqw_dump();
         } else if (array_idx == 2) {
-            ms_patch_consts_dump();
+            ms_match_n_patch_dump();
         } else if (array_idx == 3) {
-            ms_match_patch_regs_dump();
+            ms_match_n_patch_dump();
         } else if (array_idx == 4) {
-            ms_patch_ram_dump();
+            ms_rw_code_dump();
         } else {
             printf("Invalid array index\n");
         }
