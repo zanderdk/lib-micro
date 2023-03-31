@@ -1,5 +1,6 @@
 #include "dump.h"
 #include "udbg.h"
+#include "patch.h"
 
 void ms_array_dump(u64 array_sel, u64 fast_addr, u64 size) {
 

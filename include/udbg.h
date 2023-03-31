@@ -69,4 +69,7 @@ RDXWR(iosf_sb_write, 0xD0)
 
 #undef RDXWR
 
+extern uint64_t ucode_invoke(uint64_t addr);
+extern u64 ucode_invoke_2(u64 addr, u64 arg1, u64 arg2);
+extern u64 ucode_invoke_3(u64 addr, u64 arg1, u64 arg2, u64 arg3);
 #endif // UDBG_H_

@@ -2,7 +2,7 @@
 #include "ldat.h"
 #include "ucode_macro.h"
 
-extern u8 verbose;
+/* extern u8 verbose; */
 
 u64 ucode_addr_to_patch_addr(u64 addr) {
     u64 base = addr - 0x7c00;
@@ -42,8 +42,8 @@ void init_match_and_patch(void) {
     #include "ucode/match_and_patch_init.h"
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     u64 ret = ucode_invoke(addr);
-    if (verbose)
-        printf("init_match_and_patch: %lx\n", ret);
+    /* if (verbose) */
+    /*     printf("init_match_and_patch: %lx\n", ret); */
     enable_match_and_patch();
 }
 
@@ -64,8 +64,8 @@ void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch_addr) {
     #include "ucode/match_and_patch_hook.h"
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     u64 ret = ucode_invoke_2(addr, patch_value, entry_idx<<1);
-    if (verbose)
-        printf("hook_match_and_patch: %lx\n", ret);
+    /* if (verbose) */
+    /*     printf("hook_match_and_patch: %lx\n", ret); */
 }
 
 u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr) {
@@ -78,8 +78,8 @@ u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u6
 
 void do_fix_IN_patch() {
     #include "ucode/fix_in.h"
-    if (verbose)
-        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
+    /* if (verbose) */
+    /*     printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr)); */
     patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
     hook_match_and_patch(0x1f, hook_address, addr);
 }

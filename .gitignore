@@ -5,3 +5,4 @@ alu_ops.h
 .ccls-cache/
 .gdb_history
 .cache/
+build/

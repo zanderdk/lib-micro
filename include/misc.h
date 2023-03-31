@@ -1,7 +1,7 @@
-#define _GNU_SOURCE
-
 #ifndef MISC_H_
 #define MISC_H_
+#define _GNU_SOURCE
+
 #include <stdint.h>
 #include <sched.h>
 #include <unistd.h>
@@ -39,13 +39,5 @@ typedef struct {
 #define lmfence() asm volatile("lfence\n mfence\n")
 #define wbinvd() asm volatile("wbinvd\n")
 
-void static assign_to_core(int core_id) {
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(core_id, &cpuset);
-    if (sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset) != 0){
-        error(EXIT_FAILURE, -1, "assign to specifi core failed.");
-    }
-}
-
+void assign_to_core(int core_id);
 #endif // MISC_H_

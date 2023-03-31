@@ -2,6 +2,7 @@
 #define LDAT_H_
 #include "misc.h"
 #include "udbg.h"
+#include "patch.h"
 
 void ldat_array_write(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val);
 void ms_array_write(u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val);
