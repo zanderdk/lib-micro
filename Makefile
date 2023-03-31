@@ -55,5 +55,14 @@ upload: all
 	$(eval EXEC_FILES := $(shell find build -type f -perm /u=x,g=x,o=x -exec ls {} \; | xargs))
 	scp $(EXEC_FILES) $(USER)@up:~
 
-.PHONY: all clean static dynamic tools upload
+
+DOCS_RST = $(wildcard docs/sphinx/source/*.rst)
+docs: $(DOCS_RST) $(SOURCES)
+	make -C docs/sphinx html
+
+host-docs: docs
+	python -m http.server --directory docs/sphinx/build/html
+
+
+.PHONY: all clean static dynamic tools upload docs host-docs
 .DEFAULT_GOAL := upload
