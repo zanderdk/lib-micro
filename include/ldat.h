@@ -2,7 +2,6 @@
 #define LDAT_H_
 #include "misc.h"
 #include "udbg.h"
-#include "patch.h"
 
 void ldat_array_write(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val);
 void ms_array_write(u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val);
@@ -51,12 +50,14 @@ void ms_match_n_patch_write(u64 addr, u64 val);
 __attribute__((weak, alias("ms_array_4_write")))
 void ms_rw_code_write(u64 addr, u64 val);
 
-void static enable_match_and_patch(void) {
+__attribute__((always_inline))
+void static inline enable_match_and_patch(void) {
     u64 mp = crbus_read(0x692);
     crbus_write(0x692, mp & ~1uL);
 }
 
-void static disable_match_and_patch(void) {
+__attribute__((always_inline))
+void static inline disable_match_and_patch(void) {
     u64 mp = crbus_read(0x692);
     crbus_write(0x692, mp | 1uL);
 }

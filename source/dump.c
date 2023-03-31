@@ -13,7 +13,7 @@ void ms_array_dump(u64 array_sel, u64 fast_addr, u64 size) {
     }
 }
 
-void ms_rom_dump(void){
+void ms_ro_dump(void){
     puts("array 00:");
     ms_array_dump(0, 0, 0x8000);
 }

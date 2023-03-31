@@ -1,6 +1,8 @@
 #include "ldat.h"
 #include "udbg.h"
 
+extern u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr);
+
 void ldat_array_write(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val) {
     u64 prev = crbus_read(0x692);
     crbus_write(0x692, prev | 1);

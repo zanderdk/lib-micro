@@ -7,11 +7,94 @@ typedef struct {
     u64 status;
 } u_result_t;
 
-u_result_t udbgrd(uint64_t type, uint64_t addr);
-u_result_t udbgwr(uint64_t type, uint64_t addr, uint64_t value);
+__attribute__((always_inline))
+u_result_t static inline udbgrd(uint64_t type, uint64_t addr) {
+    lmfence();
+    u_result_t res;
+    asm volatile(
+        ".byte 0x0F, 0x0E\n\t"
+        : "=d" (res.value)
+        , "=b" (res.status)
+        : "a" (addr)
+        , "c" (type)
+    );
+    lmfence();
+    return res;
+}
+
+__attribute__((always_inline))
+u_result_t static inline udbgwr(uint64_t type, uint64_t addr, uint64_t value) {
+    uint32_t value_low = (uint32_t)(value & 0xFFFFFFFF);
+    uint32_t value_high = (uint32_t)(value >> 32);
+    u_result_t res;
+    lmfence();
+    asm volatile(
+        ".byte 0x0F, 0x0F\n\t"
+        : "=d" (res.value)
+        , "=b" (res.status)
+        : "a" (addr)
+        , "c" (type)
+        , "d" (value_low)
+        , "b" (value_high)
+    );
+    lmfence();
+    return res;
+}
+
+
+__attribute__((always_inline))
+uint64_t static inline ucode_invoke(uint64_t addr) {
+    uint64_t rax = addr, rcx = 0xD8;
+    lmfence();
+    asm volatile(
+        ".byte 0x0F, 0x0F\n\t"
+        : "+a" (rax)
+        , "+c" (rcx)
+        :
+        : "rbx", "rdx", "rdi", "rsi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+    );
+    lmfence();
+    return rax;
+}
+
+__attribute__((always_inline))
+u64 static inline ucode_invoke_2(u64 addr, u64 arg1, u64 arg2) {
+    uint64_t rax = addr, rcx = 0xD8;
+    lmfence();
+    asm volatile(
+        ".byte 0x0F, 0x0F\n\t"
+        : "+a" (rax)
+        , "+c" (rcx)
+        , "+rdi" (arg1)
+        , "+rsi" (arg2)
+        :
+        : "rbx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+    );
+    lmfence();
+    return rax;
+}
+
+__attribute__((always_inline))
+u64 static inline ucode_invoke_3(u64 addr, u64 arg1, u64 arg2, u64 arg3) {
+    u64 rax = addr, rcx = 0xD8;
+    lmfence();
+    asm volatile(
+        ".byte 0x0F, 0x0F\n\t"
+        : "+a" (rax)
+        , "+c" (rcx)
+        , "+rdi" (arg1)
+        , "+rsi" (arg2)
+        , "+rdx" (arg3)
+        :
+        : "rbx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+    );
+    lmfence();
+    return rax;
+}
 
 #define SIMPLERD(name, type) \
-u64 static name(u64 addr) { \
+__attribute__((always_inline)) \
+u64 static inline name(u64 addr) { \
     return (u64)udbgrd(type, addr).value; \
 }
 
@@ -27,7 +110,8 @@ SIMPLERD(staging2_read, 0x40)
 #undef SIMPLERD
 
 #define STATUSRD(name, type) \
-u_result_t static name(u64 addr) { \
+__attribute__((always_inline)) \
+u_result_t static inline name(u64 addr) { \
  return udbgrd(type, addr); \
 }
 
@@ -36,7 +120,8 @@ STATUSRD(sa_read, 0x08)
 #undef STATUSRD
 
 #define SIMPLEWR(name, type)     \
-void static name(u64 addr, u64 value) { \
+__attribute__((always_inline)) \
+void static inline name(u64 addr, u64 value) { \
     udbgwr(type, addr, value); \
 }
 
@@ -52,7 +137,8 @@ SIMPLEWR(staging2_write, 0x40)
 #undef SIMPLEWR
 
 #define RBXWR(name, type) \
-u64 static name(u64 addr, u64 value) { \
+__attribute__((always_inline)) \
+u64 static inline name(u64 addr, u64 value) { \
     return (u64)udbgwr(type, addr, value).status; \
 }
 
@@ -61,7 +147,8 @@ RBXWR(sa_write, 0x08)
 #undef RBXWR
 
 #define RDXWR(name, type) \
-u64 static name(u64 addr, u64 value) { \
+__attribute__((always_inline)) \
+u64 static inline name(u64 addr, u64 value) { \
     return (u64)udbgwr(type, addr, value).value; \
 }
 
@@ -69,7 +156,7 @@ RDXWR(iosf_sb_write, 0xD0)
 
 #undef RDXWR
 
-extern uint64_t ucode_invoke(uint64_t addr);
-extern u64 ucode_invoke_2(u64 addr, u64 arg1, u64 arg2);
-extern u64 ucode_invoke_3(u64 addr, u64 arg1, u64 arg2, u64 arg3);
+uint64_t ucode_invoke(uint64_t addr);
+u64 ucode_invoke_2(u64 addr, u64 arg1, u64 arg2);
+u64 ucode_invoke_3(u64 addr, u64 arg1, u64 arg2, u64 arg3);
 #endif // UDBG_H_

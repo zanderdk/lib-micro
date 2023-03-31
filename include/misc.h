@@ -39,5 +39,13 @@ typedef struct {
 #define lmfence() asm volatile("lfence\n mfence\n")
 #define wbinvd() asm volatile("wbinvd\n")
 
-void assign_to_core(int core_id);
+__attribute__((always_inline))
+void static inline assign_to_core(int core_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core_id, &cpuset);
+    if (sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset) != 0){
+        error(EXIT_FAILURE, -1, "assign to specifi core failed.");
+    }
+}
 #endif // MISC_H_
