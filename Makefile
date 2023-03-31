@@ -42,7 +42,7 @@ DIRECTORIES = $(wildcard tools/*/)
 
 clean:
 	$(eval EXEC_FILES := $(shell find tools -type f -perm /u=x,g=x,o=x -exec ls {} \; | xargs))
-	rm -rf build include/alu_ops.h $(EXEC_FILES)
+	rm -rf build include/alu_ops.h $(EXEC_FILES) docs/doxygen/build docs/sphinx/build/
 
 tools: $(TARGET_LIB_SHARED)
 	make -C tools all
@@ -57,7 +57,7 @@ upload: all
 
 
 DOCS_RST = $(wildcard docs/sphinx/source/*.rst)
-docs: $(DOCS_RST) $(SOURCES)
+docs: $(DOCS_RST) $(SOURCES) docs/sphinx/source/conf.py
 	make -C docs/sphinx html
 
 host-docs: docs

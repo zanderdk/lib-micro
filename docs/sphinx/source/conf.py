@@ -37,6 +37,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.imgmath', 
     'sphinx.ext.todo',
+    'sphinx_rtd_theme',
     'breathe',
 ]
 
@@ -54,7 +55,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'haiku' # 'alabaster'
+html_theme = 'sphinx_rtd_theme' # 'alabaster'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
