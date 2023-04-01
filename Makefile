@@ -60,6 +60,9 @@ docs: $(DOCS_RST) $(SOURCES) docs/sphinx/source/conf.py
 host-docs: docs
 	python -m http.server --directory docs/sphinx/build/html
 
+remote:
+	rsync -avzh ./* $(USER)@up:~/lib-micro/
+	ssh $(USER)@up "make -C lib-micro all"
 
-.PHONY: all clean static dynamic tools upload docs host-docs
+.PHONY: all clean static dynamic tools upload docs host-docs remote
 .DEFAULT_GOAL := upload
