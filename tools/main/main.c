@@ -7,20 +7,11 @@
 
 #include "misc.h"
 #include "ldat.h"
-#include "dump.h"
 #include "patch.h"
 
 #include "ucode_macro.h"
 
 u8 verbose = 0;
-
-void do_hlt_patch() {
-    #include "ucode/hlt.h"
-    if (verbose)
-        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
-    hook_match_and_patch(0, hook_address, addr);
-}
 
 #define JUMP_DESTINATION 0x7c10
 void install_jump_target(void) {
@@ -122,10 +113,8 @@ static struct argp_option options[] = {
     {.name="verbose", .key='v', .arg=NULL, .flags=0, .doc="Produce verbose output"},
     {.name="reset", .key='r', .arg=NULL, .flags=0, .doc="reset match & patch"},
     {.name="wait_trace", .key='w', .arg=NULL, .flags=0, .doc="wait for hit on trace"},
-    {.name="dump_ram", .key='d', .arg=NULL, .flags=0, .doc="dump uram"},
     {.name="xlat_fuzz", .key='x', .arg="uaddrs", .flags=0, .doc="start fuzzing xlats"},
     {.name="trace", .key='t', .arg="uaddr", .flags=0, .doc="trace ucode addr"},
-    {.name="dump_array", .key='a', .arg="array", .flags=0, .doc="dump array"},
     {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
     {0}
 };
@@ -135,13 +124,11 @@ static struct argp_option options[] = {
 struct arguments{
     u8 verbose;
     u8 reset;
-    u8 uram;
     u8 wait;
     u8 xlat;
     s32 trace_addr;
     s32 uaddrs[0x10];
     u8 uaddr_count;
-    s8 array;
     s8 core;
 };
 
@@ -158,9 +145,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             break;
         case 'r':
             arguments->reset = 1;
-            break;
-        case 'd':
-            arguments->uram = 1;
             break;
         case 'w':
             arguments->wait = 1;
@@ -180,13 +164,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
         case 't':
             arguments->trace_addr = strtol(arg, NULL, 0);
             if (arguments->trace_addr < 0){
-                argp_usage(state);
-                exit(EXIT_FAILURE);
-            }
-            break;
-        case 'a':
-            arguments->array = strtol(arg, NULL, 0);
-            if (arguments->array < 0 || arguments->array > 4){
                 argp_usage(state);
                 exit(EXIT_FAILURE);
             }
@@ -241,7 +218,6 @@ void xlat_fuzzing(int* uaddrs, int size) {
     for (u64 i = 0; i < size; i++) {
         persistent_trace(uaddr + i * 0x20, uaddrs[i], i);
     }
-    /* do_hlt_patch(); */
     genral_purpose_regs val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
@@ -262,24 +238,10 @@ int main(int argc, char* argv[]) {
     struct arguments arguments;
     memset(&arguments, 0, sizeof(struct arguments));
     arguments.trace_addr = -1;
-    arguments.array = -1;
     arguments.core = -1;
 
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
     verbose = arguments.verbose;
-
-    if (verbose) {
-        puts("arguments:");
-        printf("\tverbose:       %d\n", arguments.verbose);
-        printf("\treset:         %d\n", arguments.reset);
-        printf("\txlat:          %d\n", arguments.xlat);
-        printf("\ttrace_addr:    0x%x\n", (u32)arguments.trace_addr);
-        printf("\twait:          %d\n", arguments.wait);
-        printf("\tarray:         %d\n", arguments.array);
-        printf("\turam:          %d\n", arguments.uram);
-        printf("\tcore:          %d\n", arguments.core);
-        puts("");
-    }
 
     u8 core = (arguments.core < 0)? 0 : arguments.core;
     if (0 <= core && core <= 3) 
@@ -313,27 +275,6 @@ int main(int argc, char* argv[]) {
             }
             printf("\nPath not hit\n");
         }
-    }
-
-    if (arguments.array > -1) { // Dump array
-        u8 array_idx = arguments.array;
-        if (array_idx == 0) {
-            ms_ro_code_dump();
-        } else if (array_idx == 1) {
-            ms_ro_seqw_dump();
-        } else if (array_idx == 2) {
-            ms_match_n_patch_dump();
-        } else if (array_idx == 3) {
-            ms_match_n_patch_dump();
-        } else if (array_idx == 4) {
-            ms_rw_code_dump();
-        } else {
-            printf("Invalid array index\n");
-        }
-    }
-
-    if(arguments.uram) {
-        uram_dump();
     }
 
     return 0;
