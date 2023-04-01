@@ -2,41 +2,77 @@
 #define OPCODE_H_
 
 // registers
-#define RAX 32UL
-#define RCX 33UL
-#define RDX 34UL
-#define RBX 35UL
-#define RSP 36UL
-#define RBP 37UL
-#define RSI 38UL
-#define RDI 39UL
-#define R8 40UL
-#define R9 41UL
-#define R10 42UL
-#define R11 43UL
-#define R12 44UL
-#define R13 45UL
-#define R14 46UL
-#define R15 47UL
-#define TMP0 48UL
-#define TMP1 49UL
-#define TMP2 50UL
-#define TMP3 51UL
-#define TMP4 52UL
-#define TMP5 53UL
-#define TMP6 54UL
-#define TMP7 55UL
-#define TMP8 56UL
-#define TMP9 57UL
-#define TMP10 58UL
-#define TMP11 59UL
-#define TMP12 60UL
-#define TMP13 61UL
-#define TMP14 62UL
-#define TMP15 63UL
-#define R64DST 1UL
-#define R64SRC 2UL
-#define R64BASE 4UL
+#define RAX     0x20UL
+#define RCX     0x21UL
+#define RDX     0x22UL
+#define RBX     0x23UL
+#define RSP     0x24UL
+#define RBP     0x25UL
+#define RSI     0x26UL
+#define RDI     0x27UL
+#define R8      0x28UL
+#define R9      0x29UL
+#define R10     0x2aUL
+#define R11     0x2bUL
+#define R12     0x2cUL
+#define R13     0x2dUL
+#define R14     0x2eUL
+#define R15     0x2fUL
+#define TMP0    0x30UL
+#define TMP1    0x31UL
+#define TMP2    0x32UL
+#define TMP3    0x33UL
+#define TMP4    0x34UL
+#define TMP5    0x35UL
+#define TMP6    0x36UL
+#define TMP7    0x37UL
+#define TMP8    0x38UL
+#define TMP9    0x39UL
+#define TMP10   0x3aUL
+#define TMP11   0x3bUL
+#define TMP12   0x3cUL
+#define TMP13   0x3dUL
+#define TMP14   0x3eUL
+#define TMP15   0x3fUL
+#define XMM0    0x20UL
+#define XMM1    0x21UL
+#define XMM2    0x22UL
+#define XMM3    0x23UL
+#define XMM4    0x24UL
+#define XMM5    0x25UL
+#define XMM6    0x26UL
+#define XMM7    0x27UL
+#define XMM8    0x28UL
+#define XMM9    0x29UL
+#define XMM10   0x2aUL
+#define XMM11   0x2bUL
+#define XMM12   0x2cUL
+#define XMM13   0x2dUL
+#define XMM14   0x2eUL
+#define XMM15   0x2fUL
+#define MM0     0x30UL
+#define MM1     0x31UL
+#define MM2     0x32UL
+#define MM3     0x33UL
+#define MM4     0x34UL
+#define MM5     0x35UL
+#define MM6     0x36UL
+#define MM7     0x37UL
+#define TMM0    0x38UL
+#define TMM1    0x39UL
+#define TMM2    0x3aUL
+#define TMM3    0x3bUL
+#define TMM4    0x3cUL
+#define TMM5    0x3dUL
+#define TMM6    0x3eUL
+#define TMM7    0x3fUL
+#define R64DST  0x01UL
+#define R64SRC  0x02UL
+#define R64BASE 0x04UL
+#define TMPV0   0x14UL
+#define TMPV1   0x15UL
+#define TMPV2   0x16UL
+#define TMPV3   0x17UL
 
 // control registers
 #define CORE_CR_CUR_RIP 0x67UL
@@ -77,6 +113,53 @@
 #define CORE_CR_CR0 0x7f6UL
 #define CORE_CR_DEBUGCTL 0x7f9UL
 #define CORE_CR_EFLAGS 0x7feUL
+
+// macro imms
+#define IMM_MACRO_ALIAS_DISPLACEMENT    0x00
+#define IMM_MACRO_ALIAS_IMMEDIATE       0x00
+#define IMM_MACRO_ALIAS_RIP             0x04
+#define IMM_MACRO_ALIAS_STI             0x05
+#define IMM_MACRO_ALIAS_MSLOOPCTR       0x08
+#define IMM_MACRO_ALIAS_DATASIZE        0x0b
+#define IMM_MACRO_ALIAS_INSTRUCTION     0x10
+
+// ustate UCODE
+#define UST_MSLOOPCTR_NONZERO   0x0001
+#define UST_SMM                 0x0800
+
+// ustate SYS
+#define UST_VMX_DIS         0x0001
+#define UST_USER_MODE       0x0002
+#define UST_8086_MODE       0x0004
+#define UST_OP_SIZE_32BIT   0x0008
+#define UST_ADDR_SIZE_64BIT 0x0010
+#define UST_XUCODE          0x0020
+#define UST_SE_INIT_DONE    0x0040
+#define UST_VMX_GUEST       0x0080
+#define UST_VMX_OP_DIS      0x0100
+
+// opcode parts
+#define _CONDO      0x000
+#define _CONDNO     0x100
+#define _CONDB      0x200
+#define _CONDNB     0x300
+#define _CONDZ      0x001
+#define _CONDNZ     0x101
+#define _CONDBE     0x201
+#define _CONDNBE    0x301
+#define _CONDS      0x002
+#define _CONDNS     0x102
+#define _CONDP      0x202
+#define _CONDNP     0x302
+#define _CONDL      0x003
+#define _CONDNL     0x103
+#define _CONDLE     0x203
+#define _CONDNLE    0x303
+
+#define _DSZ32  0x000
+#define _DSZ64  0x040
+#define _DSZ16  0x080
+#define _DSZ8   0x0c0
 
 // opcodes
 #define NOP (0x0)
@@ -125,7 +208,7 @@
 #define _XOR_DSZ64 (0x046UL << 32)
 #define _NOTAND_DSZ64 (0x047UL << 32)
 #define _ZEROEXT_DSZ64 (0x048UL << 32)
-#define _MOVE_DSZ64 (0x049UL << 32) //TODO: think issues with this one
+#define _MOVE_DSZ64 (0x049UL << 32)
 /* #define _TESTUSTATE (0x04aUL << 32) */
 /* #define _SAVEUIP (0x04cUL << 32) */
 #define _UJMPCC_DIRECT_NOTTAKEN_CONDO (0x050UL << 32)

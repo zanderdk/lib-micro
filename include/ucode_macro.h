@@ -34,10 +34,10 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define CRC_SEQ_MASK 0xFFFFFFFUL
 
 #define IMM_ENCODE_SRC0(src0_id) \
-    ( (((src0_id) & 0xffUL) << 24) | (((src0_id) & 0x1f00)<< 10) | (((src0_id) & 0xe000) >> 13) | (1 << 3) )
+    (((src0_id) & 0xffUL) << 24) | (((src0_id) & 0x1f00)<< 10) | (((src0_id) & 0xe000) >> 13) | (1 << 3)
 
 #define IMM_ENCODE_SRC1(src1_id) \
-    ( (((src1_id) & 0xffUL) << 24) | (((src1_id) & 0x1f00)<< 10) | (((src1_id) & 0xe000) >> 7) | (1 << 9) )
+    (((src1_id) & 0xffUL) << 24) | (((src1_id) & 0x1f00)<< 10) | (((src1_id) & 0xe000) >> 7) | (1 << 9)
 
 #define SRC0_ENCODE(val) \
     (((val) & 0x3f) << 0)
@@ -171,43 +171,47 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define LDZX_DSZN_ASZ32_SC1(dst, src, mode) \
     ( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
 
+#define SFENCE _SFENCE
+
+#define READUIP_REGOVR0(dst) \
+    ( _READUIP_REGOVR | DST_ENCODE(dst) | SRC0_ENCODE(0x10) )
+
+#define READUIP_REGOVR1(dst) \
+    ( _READUIP_REGOVR | DST_ENCODE(dst) | SRC0_ENCODE(0x10) | MOD0 )
+
+#define READAFLAGS(dst, src) \
+    ( _READAFLAGS | DST_ENCODE(dst) | SRC0_ENCODE(src) )
+
+#define FPREADROM_DTYPENOP(dst, src) \
+    ( _FPREADROM_DTYPENOP | DST_ENCODE(dst) | SRC0_ENCODE(src) )
+
+
 #include "alu_ops.h"
 
 //wtf both are imm, huh but imm 0 though
-#define SAVEUIP0(addr)                                  \
-    ( _SAVEUIP | IMM_ENCODE_SRC1( addr ) | IMM_ENCODE_SRC0(0)  )
-
-#define SAVEUIP1(addr)                                  \
-    ( _SAVEUIP | IMM_ENCODE_SRC1( addr ) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
-
 #define SAVEUIP0_DST(dst, addr)                                  \
     ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  )
 
 #define SAVEUIP1_DST(dst, addr)                                  \
-    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  | MOD0 ) //mod controlls if SAVEUIP1
+    ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  | MOD0 )
 
-#define UST_MSLOOPCTR_NONZERO 1
+#define SAVEUIP0(addr) SAVEUIP0_DST(0, addr)
+#define SAVEUIP1(addr) SAVEUIP1_DST(0, addr)
 
 #define WRMSLOOPCTRFBR(x) \
     ( _WRMSLOOPCTRFBR | IMM_ENCODE_SRC1(x) )
 
-#define UPDATEUSTATE_UCODE(testbits)        \
+#define UPDATEUSTATE(testbits)        \
     ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) )
 
-#define UPDATEUSTATE_SYS(testbits)        \
-    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 )
-
-#define UPDATEUSTATE_VMX(testbits)        \
-    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2)
-
-#define UPDATEUSTATE_UCODE_NOT(testbits)        \
+#define UPDATEUSTATE_NOT(testbits)        \
     ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD0 )
 
-#define UPDATEUSTATE_SYS_NOT(testbits)        \
-    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD0 )
+#define UPDATEUSTATE_REG(src, testbits)        \
+    ( _UPDATEUSTATE | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(testbits) )
 
-#define UPDATEUSTATE_VMX_NOT(testbits)        \
-    ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2 | MOD0 )
+#define UPDATEUSTATE_REG_NOT(src, testbits)        \
+    ( _UPDATEUSTATE | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(testbits) | MOD0 )
 
 #define TESTUSTATE_UCODE(testbits)        \
     ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) )
@@ -238,15 +242,34 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #define UNK256 ( (0x256UL << 32) | MOD1 )
 
-#define FLOW_CTRL_UNK (0x01 << 24)
-#define FLOW_CTRL_URET0 (0x0a << 24)
-#define FLOW_CTRL_URET1 (0x0b << 24)
-#define FLOW_CTRL_LDAT_IN (0x0d << 24)
-#define FLOW_CTRL_MSLOOPCTR (0x0e << 24)
-#define FLOW_CTRL_USTATE (0x0f << 24)
+#define FLOW_CTRL_UNK       0x01
+#define FLOW_CTRL_URET0     0x0a
+#define FLOW_CTRL_URET1     0x0b
+#define FLOW_CTRL_LDAT_IN   0x0d
+#define FLOW_CTRL_MSLOOPCTR 0x0e
+#define FLOW_CTRL_USTATE    0x0f
 
-#define UFLOWCTRL_REG(reg, uop) \
-    ( _UFLOWCTRL | uop | SRC1_ENCODE(reg) )
+#define UFLOWCTRL_REG(dst, reg, uop) \
+    ( _UFLOWCTRL | DST_ENCODE(dst) | (((uop)&0xff)<<24) | SRC1_ENCODE(reg) )
+
+#define GENARITHFLAGS(src) \
+    ( _GENARITHFLAGS | SRC0_ENCODE(src) | MOD2 )
+#define GENARITHFLAGS_REG(src0, src1) \
+    ( _GENARITHFLAGS | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) | MOD2 )
+#define GENARITHFLAGS_IMM(src, imm) \
+    ( _GENARITHFLAGS | IMM_ENCODE_SRC0(imm) | SRC1_ENCODE(src) | MOD2 )
+
+#define AETTRACE_REG(dst, val, src) \
+    ( _AETTRACE | DST_ENCODE(dst) | (((val)&0x1f)<<18) | SRC1_ENCODE(src) )
+
+#define AETTRACE_MACRO(dst, val, macro) \
+    ( _AETTRACE | DST_ENCODE(dst) | (((val)&0x1f)<<18) | IMM_ENCODE_SRC1(macro) | MOD0 )
+
+#define SIGEVENT(dst, src) \
+    ( _GENARITHFLAGS | SRC0_ENCODE(src) | MOD2 )
+#define SIGEVENT_REG(dst, src0, src1) \
+    ( _GENARITHFLAGS | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) | MOD2 )
+
 
 //Sequence word here:
 
