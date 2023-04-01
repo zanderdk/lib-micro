@@ -24,7 +24,7 @@ void install_jump_target(void) {
     };
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     if (verbose)
         printf("jump_target return value: 0x%lx\n", ucode_invoke(addr));
 }
@@ -82,14 +82,14 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
     };
 
     if (verbose) {
-        for (u64 i = 0; i < sizeof(ucode_patch) / sizeof(ucode_patch[0]); i++) {
+        for (u64 i = 0; i < ARRAY_SZ(ucode_patch); i++) {
             printf("%04lx: %012lx %012lx %012lx %012lx\n", i, ucode_patch[i][0], ucode_patch[i][1], ucode_patch[i][2], ucode_patch[i][3]);
         }
     }
 
     if (verbose)
         printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     hook_match_and_patch(idx, hook_address, addr);
 }
 
@@ -100,7 +100,7 @@ u64 make_seqw_goto_syncfull(u64 target_addr) {
 void insert_trace(u64 tracing_addr) {
     #include "ucode/trace.h"
 
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     hook_match_and_patch(0, tracing_addr, addr);   
 }
 
@@ -183,9 +183,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
     return 0;
 }
 
-genral_purpose_regs try_xlat(u64 val) {
+general_purpose_regs try_xlat(u64 val) {
     u64 rax = val;
-    genral_purpose_regs result;
+    general_purpose_regs result;
     lmfence();
     asm volatile(
         "vmxon [rbx]\n\t"
@@ -218,7 +218,7 @@ void xlat_fuzzing(int* uaddrs, int size) {
     for (u64 i = 0; i < size; i++) {
         persistent_trace(uaddr + i * 0x20, uaddrs[i], i);
     }
-    genral_purpose_regs val = try_xlat(0xdeaddeaddeaddeadUL);
+    general_purpose_regs val = try_xlat(0xdeaddeaddeaddeadUL);
     printf("rax:        0x%lx\n", val.rax);
     printf("rbx:        0x%lx\n", val.rbx);
     printf("rcx:        0x%lx\n", val.rcx);

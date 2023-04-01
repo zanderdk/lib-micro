@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wl,-rpath . -O0 -fPIE -Wno-unused-function -Wno-unused-variable -ggdb -Wall -masm=intel
-STATIC_CFLAGS = -static -R . -O0 -fPIE -Wno-unused-function -Wno-unused-variable -ggdb -Wall -masm=intel
+STATIC_CFLAGS = -static -Wl,-R . -O0 -fPIE -Wno-unused-function -Wno-unused-variable -ggdb -Wall -masm=intel
 TARGET = dump
 TARGET_STATIC = $(TARGET)_static
 
@@ -19,7 +19,7 @@ $(TARGET_STATIC): $(SOURCES)
 	gcc $(STATIC_CFLAGS)  -I $(INCLUDE_DIR) $^ $(ARCHIVE_FILE) -o $@
 
 $(TARGET): $(SOURCES)
-	$(CC) $(CFLAGS) -I $(INCLUDE_DIR) -L $(BUILD_DIR) -lmicro -o $@ $^
+	$(CC) $(CFLAGS) -I $(INCLUDE_DIR) -L $(BUILD_DIR) $^ -lmicro -o $@
 
 all: $(TARGET_STATIC) $(TARGET)
 

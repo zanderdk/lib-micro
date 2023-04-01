@@ -22,17 +22,17 @@ typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 
 typedef uint128_t u128;
-typedef int128_t s128;
+typedef int128_t  s128;
 
 typedef struct {
     u64 rax;
     u64 rbx;
     u64 rcx;
     u64 rdx;
-} genral_purpose_regs;
+} general_purpose_regs;
 
 #define ARRAY_SZ(arr) \
-    sizeof(arr)/sizeof(arr[0])
+    ( sizeof(arr) / sizeof(arr[0]) )
 
 #define mfence() asm volatile("mfence\n")
 #define lfence() asm volatile("lfence\n")
@@ -45,7 +45,7 @@ void static inline assign_to_core(int core_id) {
     CPU_ZERO(&cpuset);
     CPU_SET(core_id, &cpuset);
     if (sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset) != 0){
-        error(EXIT_FAILURE, -1, "assign to specifi core failed.");
+        error(EXIT_FAILURE, -1, "assign to specific core failed.");
     }
 }
 #endif // MISC_H_

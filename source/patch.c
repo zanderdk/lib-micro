@@ -40,7 +40,7 @@ void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) {
 
 void init_match_and_patch(void) {
     #include "ucode/match_and_patch_init.h"
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     u64 ret = ucode_invoke(addr);
     /* if (verbose) */
     /*     printf("init_match_and_patch: %lx\n", ret); */
@@ -57,12 +57,11 @@ void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch_addr) {
         return;
     }
 
-    //TODO: try to hook odd addresses!!
     u64 poff = (patch_addr - 0x7c00) / 2;
     u64 patch_value = 0x3e000000 | (poff << 16) | ucode_addr | 1;
 
     #include "ucode/match_and_patch_hook.h"
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     u64 ret = ucode_invoke_2(addr, patch_value, entry_idx<<1);
     /* if (verbose) */
     /*     printf("hook_match_and_patch: %lx\n", ret); */
@@ -70,7 +69,7 @@ void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch_addr) {
 
 u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr) {
     #include "ucode/ldat_read.h"
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     u64 array_bank_sel = 0x10000 | ((dword_idx & 0xf) << 12) | ((array_sel & 0xf) << 8) | (bank_sel & 0xf);
     u64 res = ucode_invoke_3(addr, pdat_reg, array_bank_sel, 0xc00000 | fast_addr);
     return res;
@@ -80,6 +79,6 @@ void do_fix_IN_patch() {
     #include "ucode/fix_in.h"
     /* if (verbose) */
     /*     printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr)); */
-    patch_ucode(addr, ucode_patch, sizeof(ucode_patch) / sizeof(ucode_patch[0]));
+    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     hook_match_and_patch(0x1f, hook_address, addr);
 }

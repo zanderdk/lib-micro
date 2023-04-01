@@ -12,14 +12,11 @@ SOURCES = $(wildcard source/*.c)
 OBJECTS = $(patsubst source/%.c, build/%.o, $(SOURCES))
 HEADERS = $(wildcard include/*.h) $(wildcard include/ucode/*.h)
 
-CMD = "find tools -type f -perm /u=x,g=x,o=x -exec ls {} \; | xargs"
-
 #export all variables
 export
 
-# yee not the prettiest but easy as hell
 include/alu_ops.h: include/gen_inst.py
-	python include/gen_inst.py > include/alu_ops.h
+	./include/gen_inst.py > include/alu_ops.h
 
 $(SOURCES): include/alu_ops.h $(HEADERS) build
 
