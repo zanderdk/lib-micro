@@ -10,6 +10,7 @@ Welcome to lib-micro's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   about
    api
 
 Indices and tables
