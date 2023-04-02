@@ -54,71 +54,43 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define CRC_UOP(uop) \
     (( (uop) & CRC_UOP_MASK) | (parity0((uop)&CRC_UOP_MASK) << 46) | (parity1((uop)&CRC_UOP_MASK) << 47))
 
-#define UJMP(uaddr) \
-    (_UJMP | IMM_ENCODE_SRC1(uaddr))
+#define INSTR_I0(imm) ( IMM_ENCODE_SRC0(imm) )
+#define INSTR_I1(imm) ( IMM_ENCODE_SRC1(imm) )
+#define INSTR_R0(src) ( SRC0_ENCODE(src) )
+#define INSTR_R1(src) ( SRC1_ENCODE(src) )
+#define INSTR_M0(macro) ( IMM_ENCODE_SRC0(macro) | MOD0 )
+#define INSTR_M1(macro) ( IMM_ENCODE_SRC1(macro) | MOD0 )
+#define INSTR_DI0(dst, imm) ( DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm) )
+#define INSTR_DI1(dst, imm) ( DST_ENCODE(dst) | IMM_ENCODE_SRC1(imm) )
+#define INSTR_DR0(dst, src) ( DST_ENCODE(dst) | SRC0_ENCODE(src) )
+#define INSTR_DR1(dst, src) ( DST_ENCODE(dst) | SRC1_ENCODE(src) )
+#define INSTR_DM0(dst, macro) ( DST_ENCODE(dst) | IMM_ENCODE_SRC0(macro) | MOD0 )
+#define INSTR_DM1(dst, macro) ( DST_ENCODE(dst) | IMM_ENCODE_SRC1(macro) | MOD0 )
+#define INSTR_RR(src0, src1) ( SRC0_ENCODE(src0) | SRC1_ENCODE(src1) )
+#define INSTR_RI(src, imm) ( SRC0_ENCODE(src) | IMM_ENCODE_SRC1(imm) )
+#define INSTR_IR(imm, src) ( IMM_ENCODE_SRC0(imm) | SRC1_ENCODE(src) )
+#define INSTR_RM(src, macro) ( SRC0_ENCODE(src) | IMM_ENCODE_SRC1(macro) | MOD0 )
+#define INSTR_MR(macro, src) ( IMM_ENCODE_SRC0(macro) | SRC1_ENCODE(src) | MOD0 )
+#define INSTR_DRR(dst, src0, src1) ( DST_ENCODE(dst) | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) )
+#define INSTR_DRI(dst, src, imm) ( DST_ENCODE(dst) | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(imm) )
+#define INSTR_DIR(dst, imm, src) ( DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm) | SRC1_ENCODE(src) )
+#define INSTR_DRM(dst, src, macro) ( DST_ENCODE(dst) | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(macro) | MOD0 )
+#define INSTR_DMR(dst, macro, src) ( DST_ENCODE(dst) | IMM_ENCODE_SRC0(macro) | SRC1_ENCODE(src) | MOD0 )
 
-// reg to reg
-
-#define MOVE_DSZ64_REG(dst, reg) \
-    ( _MOVE_DSZ64 | DST_ENCODE(dst) | SRC0_ENCODE(reg) )
-
-// imm to reg
-
-#define ZEROEXT_DSZ64(dst, imm) \
-    ( _ZEROEXT_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
-
-#define ZEROEXT_DSZ32(dst, imm) \
-    ( _ZEROEXT_DSZ32 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
-
-#define ZEROEXT_DSZ16(dst, imm) \
-    ( _ZEROEXT_DSZ16 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
-
-#define ZEROEXT_DSZ8(dst, imm) \
-    ( _ZEROEXT_DSZ8 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
-
-#define MOVE_DSZ64_IMM(dst, imm) \
-    ( _MOVE_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(imm))
-
-// creg to reg
-
-#define MOVEFROMCREG_DSZ64_IMM(dst, creg_imm) \
-    ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) | IMM_ENCODE_SRC1(creg_imm) | MOD2)
-
-#define MOVEFROMCREG_DSZ64_REG(dst, creg_reg) \
-    ( _MOVEFROMCREG_DSZ64 | DST_ENCODE(dst) | SRC1_ENCODE(creg_reg) | MOD2)
-
-#define MOVETOCREG_DSZ64_IMM(src, creg_imm) \
-    ( _MOVETOCREG_DSZ64 | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(creg_imm) | MOD2)
-
-#define MOVETOCREG_DSZ64_REG(src, creg_reg) \
-    ( _MOVETOCREG_DSZ64 | SRC0_ENCODE(src) | SRC1_ENCODE(creg_reg) | MOD2)
-
-// uram to reg
-
-#define READURAM_IMM(dst, addr_imm) \
-    ( _READURAM | DST_ENCODE(dst) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
-
-#define READURAM_REG(dst, addr_reg) \
-    ( _READURAM | DST_ENCODE(dst) | SRC1_ENCODE(addr_reg) | MOD2 )
-
-#define WRITEURAM_IMM(src, addr_imm) \
-    ( _WRITEURAM | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(addr_imm) | MOD2 )
-
-#define WRITEURAM_REG(src, addr_reg) \
-    ( _WRITEURAM | SRC0_ENCODE(src) | SRC1_ENCODE(addr_reg) | MOD2 )
+#include "inst.h"
 
 // stagingbuf to reg
 
-#define LDSTGBUF_DSZ64_ASZ16_SC1_IMM(dst, addr_imm) \
+#define LDSTGBUF_DSZ64_ASZ16_SC1_DI(dst, addr_imm) \
     ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(addr_imm) | MOD2 )
 
-#define LDSTGBUF_DSZ64_ASZ16_SC1_REG(dst, addr_reg) \
+#define LDSTGBUF_DSZ64_ASZ16_SC1_DR(dst, addr_reg) \
     ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) | SRC0_ENCODE(addr_reg) | MOD2 )
 
-#define STADSTGBUF_DSZ64_ASZ16_SC1_IMM(src, addr_imm) \
+#define STADSTGBUF_DSZ64_ASZ16_SC1_RI(src, addr_imm) \
     ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(addr_imm) | MOD2 )
 
-#define STADSTGBUF_DSZ64_ASZ16_SC1_REG(src, addr_reg) \
+#define STADSTGBUF_DSZ64_ASZ16_SC1_RR(src, addr_reg) \
     ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | SRC0_ENCODE(addr_reg) | MOD2 )
 
 //normal ram to reg
@@ -147,12 +119,13 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define LDZX_DSZ8_ASZ32_SC1(dst, seg, src, mode) \
     ( _LDZX_DSZ8_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
+#define LDZX_DSZN_ASZ32_SC1(dst, src, mode) \
+    ( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
+
 // test read ram
 
 #define LDTICKLE_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
     ( _LDTICKLE_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
-
-
 
 // write normal ram
 #define STAD_DSZ64_ASZ32_SC1(src2, seg, src, mode) \
@@ -167,9 +140,6 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define STAD_DSZ8_ASZ32_SC1(src2, seg, src, mode) \
     ( _STAD_DSZ8_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
-//this mode has a wacked encoding and not sure 100p working
-#define LDZX_DSZN_ASZ32_SC1(dst, src, mode) \
-    ( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
 
 #define SFENCE _SFENCE
 
@@ -179,38 +149,31 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define READUIP_REGOVR1(dst) \
     ( _READUIP_REGOVR | DST_ENCODE(dst) | SRC0_ENCODE(0x10) | MOD0 )
 
-#define READAFLAGS(dst, src) \
-    ( _READAFLAGS | DST_ENCODE(dst) | SRC0_ENCODE(src) )
-
-#define FPREADROM_DTYPENOP(dst, src) \
-    ( _FPREADROM_DTYPENOP | DST_ENCODE(dst) | SRC0_ENCODE(src) )
-
-
-#include "alu_ops.h"
-
 //wtf both are imm, huh but imm 0 though
-#define SAVEUIP0_DST(dst, addr)                                  \
+#define SAVEUIP0_DI(dst, addr)                                  \
     ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  )
 
-#define SAVEUIP1_DST(dst, addr)                                  \
+#define SAVEUIP1_DI(dst, addr)                                  \
     ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  | MOD0 )
 
-#define SAVEUIP0(addr) SAVEUIP0_DST(0, addr)
-#define SAVEUIP1(addr) SAVEUIP1_DST(0, addr)
+#define SAVEUIP0_I(addr) SAVEUIP0_DI(0, addr)
+#define SAVEUIP1_I(addr) SAVEUIP1_DI(0, addr)
 
-#define WRMSLOOPCTRFBR(x) \
-    ( _WRMSLOOPCTRFBR | IMM_ENCODE_SRC1(x) )
+#define SAVEUIP_REGOVR0(imm) \
+    ( _SAVEUIP_REGOVR | IMM_ENCODE_SRC1(imm) )
+#define SAVEUIP_REGOVR1(imm) \
+    ( _SAVEUIP_REGOVR | IMM_ENCODE_SRC1(imm) | MOD0 )
 
-#define UPDATEUSTATE(testbits)        \
+#define UPDATEUSTATE_I(testbits)        \
     ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) )
 
-#define UPDATEUSTATE_NOT(testbits)        \
+#define UPDATEUSTATE_NOT_I(testbits)        \
     ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) | MOD0 )
 
-#define UPDATEUSTATE_REG(src, testbits)        \
+#define UPDATEUSTATE_RI(src, testbits)        \
     ( _UPDATEUSTATE | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(testbits) )
 
-#define UPDATEUSTATE_REG_NOT(src, testbits)        \
+#define UPDATEUSTATE_NOT_RI(src, testbits)        \
     ( _UPDATEUSTATE | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(testbits) | MOD0 )
 
 #define TESTUSTATE_UCODE(testbits)        \
@@ -232,7 +195,7 @@ static inline unsigned long long parity1(unsigned long long value) {
     ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2 | MOD0 )
 
 #define TESTUSTATE_MSLOOP \
-    ( TESTUSTATE_UCODE(1) )
+    ( TESTUSTATE_UCODE(UST_MSLOOPCTR_NONZERO) )
 
 #define URET0 \
     ( _URET )
@@ -249,26 +212,17 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define FLOW_CTRL_MSLOOPCTR 0x0e
 #define FLOW_CTRL_USTATE    0x0f
 
-#define UFLOWCTRL_REG(dst, reg, uop) \
+#define UFLOWCTRL_DRC(dst, reg, uop) \
     ( _UFLOWCTRL | DST_ENCODE(dst) | (((uop)&0xff)<<24) | SRC1_ENCODE(reg) )
 
-#define GENARITHFLAGS(src) \
-    ( _GENARITHFLAGS | SRC0_ENCODE(src) | MOD2 )
-#define GENARITHFLAGS_REG(src0, src1) \
-    ( _GENARITHFLAGS | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) | MOD2 )
-#define GENARITHFLAGS_IMM(src, imm) \
-    ( _GENARITHFLAGS | IMM_ENCODE_SRC0(imm) | SRC1_ENCODE(src) | MOD2 )
+#define UFLOWCTRL_RC(dst, reg, uop) \
+    ( UFLOWCTRL_DRC(0, reg, uop) )
 
-#define AETTRACE_REG(dst, val, src) \
+#define AETTRACE_DCR(dst, val, src) \
     ( _AETTRACE | DST_ENCODE(dst) | (((val)&0x1f)<<18) | SRC1_ENCODE(src) )
 
-#define AETTRACE_MACRO(dst, val, macro) \
+#define AETTRACE_DCM(dst, val, macro) \
     ( _AETTRACE | DST_ENCODE(dst) | (((val)&0x1f)<<18) | IMM_ENCODE_SRC1(macro) | MOD0 )
-
-#define SIGEVENT(dst, src) \
-    ( _GENARITHFLAGS | SRC0_ENCODE(src) | MOD2 )
-#define SIGEVENT_REG(dst, src0, src1) \
-    ( _GENARITHFLAGS | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) | MOD2 )
 
 
 //Sequence word here:

@@ -18,7 +18,7 @@ void install_jump_target(void) {
     unsigned long addr = JUMP_DESTINATION;
 
     unsigned long ucode_patch[][4] = {
-    { MOVE_DSZ64_IMM(RAX, 0x1234), MOVE_DSZ64_REG(RBX, TMP1), NOP,
+    { MOVE_DSZ64_DI(RAX, 0x1234), MOVE_DSZ64_DR(RBX, TMP1), NOP,
             SEQ_NEXT | SEQ_SYNCWTMRK(2) }, //0x7d00
         {UNK256, NOP, NOP, END_SEQWORD}, //0x7d04
     };
@@ -44,32 +44,32 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
     }
     unsigned long ucode_patch[][4] = {
         {   // 0x0
-            UJMP(addr+0x4),
-            UJMP(addr+0x15),
-            UJMP(addr+0x16),
+            UJMP_I(addr+0x4),
+            UJMP_I(addr+0x15),
+            UJMP_I(addr+0x16),
             NOP_SEQWORD
         },
         {   // 0x4
             TESTUSTATE_SYS_NOT(0x2),
-            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba40),
-            STADSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba80),
+            STADSTGBUF_DSZ64_ASZ16_SC1_RI(TMP0, 0xba40),
+            STADSTGBUF_DSZ64_ASZ16_SC1_RI(TMP1, 0xba80),
             SEQ_GOTO0(addr+0x14)
         },
         {   // 0x8
-            ZEROEXT_DSZ32(TMP0, 0xdead),
-            CONCAT_DSZ16_REG(TMP0, TMP0, TMP0),
-            CONCAT_DSZ32_REG(TMP0, TMP0, TMP0),
+            ZEROEXT_DSZ32_DI(TMP0, 0xdead),
+            CONCAT_DSZ16_DRR(TMP0, TMP0, TMP0),
+            CONCAT_DSZ32_DRR(TMP0, TMP0, TMP0),
             NOP_SEQWORD
         },
         {   // 0xc
-            XOR_DSZ64_REG(TMP0, TMP0, RAX),
-            MOVE_DSZ64_IMM(TMP1, hook_address),
-            UJMPCC_DIRECT_NOTTAKEN_CONDZ(TMP0, JUMP_DESTINATION),
+            XOR_DSZ64_DRR(TMP0, TMP0, RAX),
+            MOVE_DSZ64_DI(TMP1, hook_address),
+            UJMPCC_DIRECT_NOTTAKEN_CONDZ_RI(TMP0, JUMP_DESTINATION),
             NOP_SEQWORD,
         },
         {   // 0x10
-            LDSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP0, 0xba40),
-            LDSTGBUF_DSZ64_ASZ16_SC1_IMM(TMP1, 0xba80),
+            LDSTGBUF_DSZ64_ASZ16_SC1_DI(TMP0, 0xba40),
+            LDSTGBUF_DSZ64_ASZ16_SC1_DI(TMP1, 0xba80),
             NOP,
             NOP_SEQWORD,
         },
@@ -77,7 +77,7 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
             uop0, uop1, uop2, seqw
         },
         {   // 0x18
-            UJMP(hook_address+4), UJMP(hook_address+5), UJMP(hook_address+6), NOP_SEQWORD
+            UJMP_I(hook_address+4), UJMP_I(hook_address+5), UJMP_I(hook_address+6), NOP_SEQWORD
         }
     };
 

@@ -15,10 +15,10 @@ HEADERS = $(wildcard include/*.h) $(wildcard include/ucode/*.h)
 #export all variables
 export
 
-include/alu_ops.h: include/gen_inst.py
-	./include/gen_inst.py > include/alu_ops.h
+include/inst.h: include/gen_inst.py
+	./include/gen_inst.py > include/inst.h
 
-$(SOURCES): include/alu_ops.h $(HEADERS) build
+$(SOURCES): include/inst.h $(HEADERS) build
 
 build:
 	mkdir build
@@ -39,7 +39,7 @@ DIRECTORIES = $(wildcard tools/*/)
 
 clean:
 	$(eval EXEC_FILES := $(shell find tools -type f -perm /u=x,g=x,o=x -exec ls {} \; | xargs))
-	rm -rf build include/alu_ops.h $(EXEC_FILES) docs/doxygen/build docs/sphinx/build/
+	rm -rf build include/inst.h $(EXEC_FILES) docs/doxygen/build docs/sphinx/build/
 
 tools: $(TARGET_LIB_SHARED)
 	make -C tools all
@@ -58,7 +58,7 @@ docs: $(DOCS_RST) $(SOURCES) docs/sphinx/source/conf.py
 	make -C docs/sphinx html
 
 host-docs: docs
-	python -m http.server --directory docs/sphinx/build/html
+	python3 -m http.server --directory docs/sphinx/build/html
 
 remote:
 	rsync -avzh ./* $(USER)@up:~/lib-micro/
