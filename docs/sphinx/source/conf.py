@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.imgmath', 
     'sphinx.ext.todo',
     'sphinx_rtd_theme',
+    'sphinxcontrib.bitfield',
     'breathe',
 ]
 

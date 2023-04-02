@@ -11,6 +11,7 @@ Welcome to lib-micro's documentation!
    :caption: Contents:
 
    about
+   structure
    api
 
 Indices and tables
