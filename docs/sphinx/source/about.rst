@@ -1,7 +1,7 @@
 About Lib-Micro
 =================================
 
-Lib-Micro is a library that allows you to make apply change to microcode from a Linux executable ELF binary.
+Lib-Micro is a library that allows you to make apply change to `microcode <https://en.wikipedia.org/wiki/Microcode>`_ from a Linux executable ELF binary.
 This library provides a EBPF inspired C styled macro language to chain micro operation and applying patches to the individual CPU cores.
 This allow users to change, modify and add functionality to the x86 instruction set.
 
