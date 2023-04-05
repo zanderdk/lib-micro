@@ -14,7 +14,7 @@ The microcode address space ranges from 0x0000 to 0x7E00 where each microcode in
 Microcode Address Space
 -----------------------
 
-As stated above the address space ranges from U0000 to U7e00 exclusively, where U7c00 and above is writeable expect every third microcode which is a implicit nop instruction. Each triad has an associated sequence word controlling the execution flow of the triad. This means that sequence word dictate's at what address we should continue execution after the current triad as well as synchronization and memory barriers. Sequence word and the implicit nop cannot be addressed from microcode and thereby no valid U address exists for these constructs.
+As stated above the address space ranges from U0000 to U7E00 exclusively, where U7C00 and above is writeable expect every third microcode which is a implicit nop instruction. Each triad has an associated sequence word controlling the execution flow of the triad. This means that sequence word dictate's at what address we should continue execution after the current triad as well as synchronization and memory barriers. Sequence word and the implicit nop cannot be addressed from microcode and thereby no valid U address exists for these constructs.
 
 .. list-table:: Microcode Addressing Table
    :widths: 10 10 10 10 10 10
@@ -136,3 +136,34 @@ ms_array 4
 ^^^^^^^^^^
 
 ms_array 4 contains uops for the writeable address space 0x7C00 - 0x7E00. One should write linear to this array as if they were writing to ms_array 0 with a offset of 0x7C00. When reading this array we have observed a strange behavior we have no explanation for. The array will read back the uops in the first column of instructions in the table above as entries from 0x00 to 0x80. And 0x80 to 0x100 will all be sequential entries in the second column of the table above etc.
+
+Reading and Writing
+-------------------
+
+In ldat.h we provide a set of function interacting with the LDAT which includes reading and writing to microsequencer arrays.
+When reading and writing to these array we recommend using the designated wrappers for reading specific arrays like :c:func:`ms_ro_code_read()` and :c:func:`ms_ro_code_write()`. If you to interact directly with the LDAT one can use the :c:func:`ldat_array_read()` and :c:func:`ldat_array_write()` but be carefull as multiple operations invloving the LDAT should be preformed atomic by implementing it directly in microcode.
+
+Match and Patch
+---------------
+
+Match and patch is the mechanism used to put microcode updates into effect and stored in ms_array 3. ms_array 3 contains 32 entries each of witch can redirect any address in the read only address space to an address in writeable address space. Altough we haven't observed index 0 used by any intel provided microcode update it doesn't seam to have any special meaning, and every entry seams to follow the bitfiled pattern described below.
+
+.. bitfield::
+    :bits: 29
+    :lanes: 1
+
+        [
+            { "name": "p",   "bits": 1, "type": 1 },
+            { "name": "src",   "bits": 14, "type": 2 },
+            { "name": "poff",   "bits": 8, "type": 3 },
+            { "name": "flags",   "bits": 6, "type": 4 }
+        ]
+
+
+In the figure above ``p`` is a present flag and dictate if the entry is used. ``src`` is a U address informing to jump somewhere else if the this address is ever encountered doing execution. ``poff`` is calulated according to the following equation where ``uaddr`` is the target address in form of a U address:
+
+:math:`\text{poff}=(\text{uaddr}-0x7c00)>>1`
+
+Notice that ``poff`` has no way of encoding a odd U address and we have discovered that this is because every entry in ms_array 3 infact creates two mappings. One mapping from :math:`\text{src} \Rightarrow \text{uaddr}` as well as :math:`(\text{src}+1) \Rightarrow (\text{uaddr}+1)`. This can have some consequences on the ability to patch certain addresses as other x86 macro instructions might use :math:`(\text{uaddr}+1)`. When tracing it also makes things harder as for certain cases it can be hard to determine which mapping was infact causing the jump.
+
+The last field in the structure we have so far named flags as we can observe a difference in how the mappings behave but we have yet to determine the individual bits meaning. We are also not entirely sure about the present bit ``p`` but all our test are indicating this behavior. We so far primary seen patches used by intel using a flags value of ``0b111110`` and only a single entry with a diffrent value.
