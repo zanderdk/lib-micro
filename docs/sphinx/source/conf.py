@@ -17,7 +17,7 @@ from subprocess import call
 
 # -- Project information -----------------------------------------------------
 
-project = 'microlib'
+project = 'lib-micro'
 copyright = 'thing goes here'
 author = 'Alex & Alex'
 

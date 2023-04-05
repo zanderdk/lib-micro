@@ -236,5 +236,10 @@ def add_dsz(inst, name):
         add_asz(inst, name)
 
 for inst in instructions:
+    print("/** \\defgroup", inst['name'])
+    if inst.get('description'):
+        print(" * ", inst['description'])
+    print(" *  @{")
+    print(" */")
     add_dsz(inst, inst['name'])
-    print()
+    print("/** @} */")
