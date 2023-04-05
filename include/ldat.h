@@ -3,6 +3,29 @@
 #include "misc.h"
 #include "udbg.h"
 
+/**
+ * Read a single value dircetly from LDAT.
+ *
+ * @param pdat_reg: Register index selecting specific device for LDAT to inspect.
+ * @param array_sel: Array index to read from.
+ * @param bank_sel: Bank selector.
+ * @param dword_idx: Double word index within the specified bank.
+ * @param fast_addr: Address to read from.
+ *
+ * @return The vaule reading from LDAT.
+ */
+extern u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr);
+
+/**
+ * Write a single value dircetly to LDAT.
+ *
+ * @param pdat_reg: Register index selecting specific device for LDAT to inspect.
+ * @param array_sel: Array index to read from.
+ * @param bank_sel: Bank selector.
+ * @param dword_idx: Double word index within the specified bank.
+ * @param fast_addr: Address to read from.
+ * @param val: Value to write.
+ */
 void ldat_array_write(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u64 fast_addr, u64 val);
 
 /**
