@@ -8,3 +8,4 @@ sphinxcontrib-qthelp~=1.0.3
 sphinxcontrib-serializinghtml~=1.1.5
 sphinxcontrib-bitfield~=0.4.2
 sphinx-rtd-theme~=1.2.0
+sphinx-autobuild

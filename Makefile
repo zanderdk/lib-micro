@@ -58,7 +58,7 @@ docs: $(DOCS_RST) $(SOURCES) docs/sphinx/source/conf.py
 	make -C docs/sphinx html
 
 host-docs: docs
-	python3 -m http.server --directory docs/sphinx/build/html
+	sphinx-autobuild docs/sphinx/source/ docs/sphinx/build/html
 
 remote:
 	rsync -avzh ./* $(USER)@up:~/lib-micro/
