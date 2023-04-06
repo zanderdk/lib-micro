@@ -70,9 +70,6 @@ u64 ldat_array_read(u64 pdat_reg, u64 array_sel, u64 bank_sel, u64 dword_idx, u6
 }
 
 void do_fix_IN_patch() {
-    #include "ucode/fix_in.h"
-    /* if (verbose) */
-    /*     printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr)); */
-    patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
-    hook_match_and_patch(0x1f, hook_address, addr);
+    // Patch U58ba to U017a
+    hook_match_and_patch(0x1f, 0x58ba, 0x017a);
 }
