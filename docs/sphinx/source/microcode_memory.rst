@@ -113,7 +113,7 @@ The microcode sequencer utilizes 5 arrays refereed to as ms_array 0 to 4 for sto
 ms_array 0
 ^^^^^^^^^^
 
-ms_array 0 we primary use to dump the read only microcode range U0000 to U7C00 but going beyond seams to reflect changes in ms_array 4 described later. U7E00. Reading an address outside a triad E.g. U0003 will write back zero.
+ms_array 0 we primary use to dump the read only microcode range U0000 to U7C00 but going beyond seems to reflect changes in ms_array 4 described later. U7E00. Reading an address outside a triad E.g. U0003 will write back zero.
 
 
 ms_array 1
@@ -146,26 +146,27 @@ When reading and writing to these array we recommend using the designated wrappe
 Match and Patch
 ---------------
 
-Match and patch is the mechanism used to put microcode updates into effect and stored in ms_array 3. ms_array 3 contains 32 entries each of witch can redirect any address in the read only address space to an address in writeable address space. Altough we haven't observed index 0 used by any intel provided microcode update it doesn't seam to have any special meaning, and every entry seams to follow the bitfiled pattern described below.
+Match and patch is the mechanism used to put microcode updates into effect and stored in ms_array 3. ms_array 3 contains 32 entries each of witch can redirect any address in the read only address space to an address in writeable address space. Altough we haven't observed index 0 used by any intel provided microcode update it doesn't seam to have any special meaning, and every entry seems to follow the bitfiled pattern described below.
 
 .. bitfield::
-    :bits: 29
+    :bits: 31
     :lanes: 1
 
         [
             { "name": "p",   "bits": 1, "type": 1 },
-            { "name": "src",   "bits": 14, "type": 2 },
-            { "name": "poff",   "bits": 8, "type": 3 },
-            { "name": "flags",   "bits": 6, "type": 4 }
+            { "name": "src",   "bits": 15, "type": 2 },
+            { "name": "dst",   "bits": 15, "type": 3 }
         ]
 
+* p
+    present flag which dictactes whether the entry is in use.
 
-In the figure above ``p`` is a present flag and dictate if the entry is used. ``src`` is a U address informing to jump somewhere else if the this address is ever encountered doing execution. ``poff`` is calulated according to the following equation where ``uaddr`` is the target address in form of a U address:
+* src
+    15-bit src. This field indicates which address to hook. It is calculated as :math:`\text{src}= \text{uaddr} / 2`
 
-:math:`\text{poff}=(\text{uaddr}-0x7c00)>>1`
+* dst
+    15-bit dst. This field indicates which address to jump to. It is calculated as :math:`\text{dst}= \text{uaddr} / 2`
 
-Notice that ``poff`` has no way of encoding a odd U address and we have discovered that this is because every entry in ms_array 3 infact creates two mappings. One mapping from :math:`\text{src} \Rightarrow \text{uaddr}` as well as :math:`(\text{src}+1) \Rightarrow (\text{uaddr}+1)`. This can have some consequences on the ability to patch certain addresses as other x86 macro instructions might use :math:`(\text{uaddr}+1)`. When tracing it also makes things harder as for certain cases it can be hard to determine which mapping was infact causing the jump.
+Notice that ``src`` and ``dst`` have no way of encoding an odd U address. We have discovered that this is because every entry in ms_array 3 in fact creates two mappings. One mapping from :math:`\text{src} \Rightarrow \text{dst}` as well as one from :math:`(\text{src}+1) \Rightarrow (\text{dst}+1)`. This can have some consequences on the ability to patch certain addresses as other x86 macro instructions might use :math:`(\text{uaddr}+1)`. When tracing it also makes things harder as for certain cases it can be hard to determine which mapping was in fact causing the jump.
 
-The last field in the structure we have so far named flags as we can observe a difference in how the mappings behave but we have yet to determine the individual bits meaning. We are also not entirely sure about the present bit ``p`` but all our test are indicating this behavior. We so far primary seen patches used by intel using a flags value of ``0b111110`` and only a single entry with a diffrent value.
-
-x86 macro instructions seams to have a fixed U address in microcode ROM area as entry point we will refer to as xlat's. How the this mapping from x86 opcodes to xlat's are defined is still a open research question. We have included a list of intresting microcode addresses in `labels.txt <https://github.com/zanderdk/lib-micro/blob/master/lables.txt>`_ where most of the opcodes originates from this `list <https://github.com/chip-red-pill/uCodeDisasm/blob/master/glm_ucode_disasm/lables.txt>`_. but due to the discovery of two mappings per entry in match and patch we have determined that previous ways of tracing has lead to inaccuracies in the list and we suspect that the updated list still contains errors.
+x86 macro instructions seem to each have a fixed U address in the microcode ROM area as an entry point, which we will refer to as xlats. How this mapping from x86 opcodes to xlats is defined is still an open research question. We have included a list of interesting microcode addresses in `labels.txt <https://github.com/zanderdk/lib-micro/blob/master/lables.txt>`_ where most of the opcodes originates from this `list <https://github.com/chip-red-pill/uCodeDisasm/blob/master/glm_ucode_disasm/lables.txt>`_. but due to the discovery of two mappings per entry in match and patch, we have determined that previous ways of tracing has lead to inaccuracies in the list, and we suspect that the updated list still contains errors.

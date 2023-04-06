@@ -2,18 +2,12 @@
 #include "ldat.h"
 #include "ucode_macro.h"
 
-/* extern u8 verbose; */
-
 u64 ucode_addr_to_patch_addr(u64 addr) {
-    u64 base = addr - 0x7c00;
-    // the last *4 does not make any sense but the CPU divides the address where
-    // to write by for, still unkown reasons
-    return ((base%4) * 0x80 + (base/4)) * 4;
+    return addr - 0x7c00;
 }
 
 u64 patch_addr_to_ucode_addr(u64 addr) {
-    // NOTICE: the ucode_addr_to_patch_addr has a *4 more, so this will not be
-    // the inverse
+    // NOTICE: This is not the inverse
     u64 mul = addr % 0x80;
     u64 off = addr / 0x80;
     return 0x7c00 + mul*4 + off;
@@ -52,13 +46,13 @@ void hook_match_and_patch(u64 entry_idx, u64 ucode_addr, u64 patch_addr) {
         printf("[-] uop address must be even\n");
         return;
     }
-    if (patch_addr % 2 != 0 || patch_addr < 0x7c00) {
-        printf("[-] patch uop address must be even and >0x7c00\n");
+    if (patch_addr % 2 != 0) {
+        printf("[-] patch uop address must be even\n");
         return;
     }
 
-    u64 poff = (patch_addr - 0x7c00) / 2;
-    u64 patch_value = 0x3e000000 | (poff << 16) | ucode_addr | 1;
+    u64 dst = patch_addr / 2;
+    u64 patch_value = (dst << 16) | ucode_addr | 1;
 
     #include "ucode/match_and_patch_hook.h"
     patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
