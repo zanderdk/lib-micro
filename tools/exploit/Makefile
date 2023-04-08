@@ -13,13 +13,11 @@ LIBS = -l $(LIBARY_PATH)
 SOURCES = $(wildcard *.c)
 HEADERS = $(wildcard *.h) $(wildcard ucode/*.h)
 
-$(SOURCES): $(HEADERS)
+$(TARGET_STATIC): $(SOURCES) $(HEADERS)
+	$(CC) $(STATIC_CFLAGS) -I $(INCLUDE_DIR) $(SOURCES) $(ARCHIVE_FILE) -o $@
 
-$(TARGET_STATIC): $(SOURCES)
-	gcc $(STATIC_CFLAGS)  -I $(INCLUDE_DIR) $^ $(ARCHIVE_FILE) -o $@
-
-$(TARGET): $(SOURCES)
-	$(CC) $(CFLAGS) -I $(INCLUDE_DIR) -L $(BUILD_DIR) $^ -lmicro -o $@
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -I $(INCLUDE_DIR) -L $(BUILD_DIR) $(SOURCES) -lmicro -o $@
 
 all: $(TARGET_STATIC) $(TARGET)
 
