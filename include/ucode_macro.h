@@ -81,75 +81,145 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 // stagingbuf to reg
 
+/** \defgroup LDSTGBUF
+ *  @{
+ */
 #define LDSTGBUF_DSZ64_ASZ16_SC1_DI(dst, addr_imm) \
     ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) | IMM_ENCODE_SRC0(addr_imm) | MOD2 )
 
 #define LDSTGBUF_DSZ64_ASZ16_SC1_DR(dst, addr_reg) \
     ( _LDSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(dst) | SRC0_ENCODE(addr_reg) | MOD2 )
+/** @} */
 
+/** \defgroup STADSTGBUF
+ *  @{
+ */
 #define STADSTGBUF_DSZ64_ASZ16_SC1_RI(src, addr_imm) \
     ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | IMM_ENCODE_SRC0(addr_imm) | MOD2 )
 
 #define STADSTGBUF_DSZ64_ASZ16_SC1_RR(src, addr_reg) \
     ( _STADSTGBUF_DSZ64_ASZ16_SC1 | DST_ENCODE(src) | SRC0_ENCODE(addr_reg) | MOD2 )
+/** @} */
 
-//normal ram to reg
+#define MEMOP_ENCODE(dst, src0, src1, offset, seg, mode) \
+    ( DST_ENCODE(dst) | SRC0_ENCODE(src0) | SRC1_ENCODE(src1) | (((offset)&0xffUL) << 24) | (((seg)&0x3UL) << 36) | (((mode)&0x1fUL) << 18) )
 
-/**
- * somehow mode is related to segment selector mode 0x0a and 0x1a is good for rsp and SS stuff
- * while 0x08 and 0x18 is related to general purpose and DS selector
- *
- * it could be that 0x0 is implicit DS
- * i am quite sure 0x1 is DS
- * 0x02 could be CS but not at all sure
- **/
+/** \defgroup LDZX
+ *  For most cases, seg=0x0, mode=0x18 will work just fine.
+ *  @{
+ */
+#define LDZX_DSZ64_ASZ32_SC1_DR(dst, src, seg, mode) \
+    ( _LDZX_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, 0, seg, mode) )
+#define LDZX_DSZ32_ASZ32_SC1_DR(dst, src, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, 0, seg, mode) )
+#define LDZX_DSZ16_ASZ32_SC1_DR(dst, src, seg, mode) \
+    ( _LDZX_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, 0, seg, mode) )
+#define LDZX_DSZ8_ASZ32_SC1_DR(dst, src, seg, mode) \
+    ( _LDZX_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, 0, seg, mode) )
+#define LDZX_DSZN_ASZ32_SC1_DR(dst, src, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, 0, seg, mode) | MOD1 )
 
-/* mode = (uop & 0x7c0000) >> 18 */
-/* seg_sel = (uop & 0x003000000000) >> 36 */
+#define LDZX_DSZ64_ASZ32_SC1_DRR(dst, src0, src1, seg, mode) \
+    ( _LDZX_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZ32_ASZ32_SC1_DRR(dst, src0, src1, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZ16_ASZ32_SC1_DRR(dst, src0, src1, seg, mode) \
+    ( _LDZX_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZ8_ASZ32_SC1_DRR(dst, src0, src1, seg, mode) \
+    ( _LDZX_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZN_ASZ32_SC1_DRR(dst, src0, src1, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) | MOD1 )
 
-#define LDZX_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
-    ( _LDZX_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+#define LDZX_DSZ64_ASZ32_SC1_DRI(dst, src, offset, seg, mode) \
+    ( _LDZX_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, offset, seg, mode) )
+#define LDZX_DSZ32_ASZ32_SC1_DRI(dst, src, offset, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, offset, seg, mode) )
+#define LDZX_DSZ16_ASZ32_SC1_DRI(dst, src, offset, seg, mode) \
+    ( _LDZX_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, offset, seg, mode) )
+#define LDZX_DSZ8_ASZ32_SC1_DRI(dst, src, offset, seg, mode) \
+    ( _LDZX_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, offset, seg, mode) )
+#define LDZX_DSZN_ASZ32_SC1_DRI(dst, src, offset, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src, 0, offset, seg, mode) | MOD1 )
 
-#define LDZX_DSZ32_ASZ32_SC1(dst, seg, src, mode) \
-    ( _LDZX_DSZ32_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
-
-#define LDZX_DSZ16_ASZ32_SC1(dst, seg, src, mode) \
-    ( _LDZX_DSZ16_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
-
-#define LDZX_DSZ8_ASZ32_SC1(dst, seg, src, mode) \
-    ( _LDZX_DSZ8_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
-
-#define LDZX_DSZN_ASZ32_SC1(dst, src, mode) \
-    ( _DZX_DSZN_ASZ32_SC1 | DST_ENCODE(dst) | ((mode) << 18) | SRC0_ENCODE(src) | MOD1 )
-
-// test read ram
+#define LDZX_DSZ64_ASZ32_SC1_DRRI(dst, src0, src1, offset, seg, mode) \
+    ( _LDZX_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZ32_ASZ32_SC1_DRRI(dst, src0, src1, offset, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZ16_ASZ32_SC1_DRRI(dst, src0, src1, offset, seg, mode) \
+    ( _LDZX_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZ8_ASZ32_SC1_DRRI(dst, src0, src1, offset, seg, mode) \
+    ( _LDZX_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) )
+#define LDZX_DSZN_ASZ32_SC1_DRRI(dst, src0, src1, offset, seg, mode) \
+    ( _LDZX_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(dst, src0, src1, 0, seg, mode) | MOD1 )
+/** @} */
 
 #define LDTICKLE_DSZ64_ASZ32_SC1(dst, seg, src, mode) \
     ( _LDTICKLE_DSZ64_ASZ32_SC1 | DST_ENCODE(dst) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
 
-// write normal ram
-#define STAD_DSZ64_ASZ32_SC1(src2, seg, src, mode) \
-    ( _STAD_DSZ64_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+/** \defgroup STAD
+ *  For most cases, seg=0x0, mode=0x18 will work just fine.
+ *  @{
+ */
+#define STAD_DSZ64_ASZ32_SC1_RR(src2, src, seg, mode) \
+    ( _STAD_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, 0, seg, mode) )
+#define STAD_DSZ32_ASZ32_SC1_RR(src2, src, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, 0, seg, mode) )
+#define STAD_DSZ16_ASZ32_SC1_RR(src2, src, seg, mode) \
+    ( _STAD_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, 0, seg, mode) )
+#define STAD_DSZ8_ASZ32_SC1_RR(src2, src, seg, mode) \
+    ( _STAD_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, 0, seg, mode) )
+#define STAD_DSZN_ASZ32_SC1_RR(src2, src, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, 0, seg, mode) | MOD1 )
 
-#define STAD_DSZ32_ASZ32_SC1(src2, seg, src, mode) \
-    ( _STAD_DSZ32_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+#define STAD_DSZ64_ASZ32_SC1_RRR(src2, src0, src1, seg, mode) \
+    ( _STAD_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZ32_ASZ32_SC1_RRR(src2, src0, src1, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZ16_ASZ32_SC1_RRR(src2, src0, src1, seg, mode) \
+    ( _STAD_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZ8_ASZ32_SC1_RRR(src2, src0, src1, seg, mode) \
+    ( _STAD_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZN_ASZ32_SC1_RRR(src2, src0, src1, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) | MOD1 )
 
-#define STAD_DSZ16_ASZ32_SC1(src2, seg, src, mode) \
-    ( _STAD_DSZ16_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
+#define STAD_DSZ64_ASZ32_SC1_RRI(src2, src, offset, seg, mode) \
+    ( _STAD_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, offset, seg, mode) )
+#define STAD_DSZ32_ASZ32_SC1_RRI(src2, src, offset, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, offset, seg, mode) )
+#define STAD_DSZ16_ASZ32_SC1_RRI(src2, src, offset, seg, mode) \
+    ( _STAD_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, offset, seg, mode) )
+#define STAD_DSZ8_ASZ32_SC1_RRI(src2, src, offset, seg, mode) \
+    ( _STAD_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, offset, seg, mode) )
+#define STAD_DSZN_ASZ32_SC1_RRI(src2, src, offset, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src, 0, offset, seg, mode) | MOD1 )
 
-#define STAD_DSZ8_ASZ32_SC1(src2, seg, src, mode) \
-    ( _STAD_DSZ8_ASZ32_SC1 | DST_ENCODE(src2) | ((seg) << 36) | ((mode) << 18) | SRC0_ENCODE(src) )
-
+#define STAD_DSZ64_ASZ32_SC1_RRRI(src2, src0, src1, offset, seg, mode) \
+    ( _STAD_DSZ64_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZ32_ASZ32_SC1_RRRI(src2, src0, src1, offset, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZ16_ASZ32_SC1_RRRI(src2, src0, src1, offset, seg, mode) \
+    ( _STAD_DSZ16_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZ8_ASZ32_SC1_RRRI(src2, src0, src1, offset, seg, mode) \
+    ( _STAD_DSZ8_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) )
+#define STAD_DSZN_ASZ32_SC1_RRRI(src2, src0, src1, offset, seg, mode) \
+    ( _STAD_DSZ32_ASZ32_SC1 | MEMOP_ENCODE(src2, src0, src1, 0, seg, mode) | MOD1 )
+/** @} */
 
 #define SFENCE _SFENCE
 
+/** \defgroup READUIP_REGOVR
+ *  @{
+ */
 #define READUIP_REGOVR0(dst) \
     ( _READUIP_REGOVR | DST_ENCODE(dst) | SRC0_ENCODE(0x10) )
 
 #define READUIP_REGOVR1(dst) \
     ( _READUIP_REGOVR | DST_ENCODE(dst) | SRC0_ENCODE(0x10) | MOD0 )
+/** @} */
 
-//wtf both are imm, huh but imm 0 though
+/** \defgroup SAVEUIP
+ *  @{
+ */
 #define SAVEUIP0_DI(dst, addr)                                  \
     ( _SAVEUIP | DST_ENCODE(dst) | IMM_ENCODE_SRC1( (addr) ) | IMM_ENCODE_SRC0(0)  )
 
@@ -158,12 +228,20 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #define SAVEUIP0_I(addr) SAVEUIP0_DI(0, addr)
 #define SAVEUIP1_I(addr) SAVEUIP1_DI(0, addr)
+/** @} */
 
+/** \defgroup SAVEUIP_REGOVR
+ *  @{
+ */
 #define SAVEUIP_REGOVR0(imm) \
     ( _SAVEUIP_REGOVR | IMM_ENCODE_SRC1(imm) )
 #define SAVEUIP_REGOVR1(imm) \
     ( _SAVEUIP_REGOVR | IMM_ENCODE_SRC1(imm) | MOD0 )
+/** @} */
 
+/** \defgroup UPDATEUSTATE
+ *  @{
+ */
 #define UPDATEUSTATE_I(testbits)        \
     ( _UPDATEUSTATE | IMM_ENCODE_SRC1(testbits) )
 
@@ -175,7 +253,11 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #define UPDATEUSTATE_NOT_RI(src, testbits)        \
     ( _UPDATEUSTATE | SRC0_ENCODE(src) | IMM_ENCODE_SRC1(testbits) | MOD0 )
+/** @} */
 
+/** \defgroup TESTUSTATE
+ *  @{
+ */
 #define TESTUSTATE_UCODE(testbits)        \
     ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) )
 
@@ -193,18 +275,23 @@ static inline unsigned long long parity1(unsigned long long value) {
 
 #define TESTUSTATE_VMX_NOT(testbits)        \
     ( _TESTUSTATE | IMM_ENCODE_SRC1(testbits) | MOD1 | MOD2 | MOD0 )
+/** @} */
 
-#define TESTUSTATE_MSLOOP \
-    ( TESTUSTATE_UCODE(UST_MSLOOPCTR_NONZERO) )
-
+/** \defgroup URET
+ *  @{
+ */
 #define URET0 \
     ( _URET )
 
 #define URET1 \
     ( _URET | MOD0 )
+/** @} */
 
 #define UNK256 ( (0x256UL << 32) | MOD1 )
 
+/** \defgroup UFLOWCTRL
+ *  @{
+ */
 #define FLOW_CTRL_UNK       0x01
 #define FLOW_CTRL_URET0     0x0a
 #define FLOW_CTRL_URET1     0x0b
@@ -212,76 +299,36 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define FLOW_CTRL_MSLOOPCTR 0x0e
 #define FLOW_CTRL_USTATE    0x0f
 
-#define UFLOWCTRL_DRC(dst, reg, uop) \
+#define UFLOWCTRL_DR(dst, reg, uop) \
     ( _UFLOWCTRL | DST_ENCODE(dst) | (((uop)&0xff)<<24) | SRC1_ENCODE(reg) )
 
-#define UFLOWCTRL_RC(dst, reg, uop) \
-    ( UFLOWCTRL_DRC(0, reg, uop) )
+#define UFLOWCTRL_R(reg, uop) \
+    ( UFLOWCTRL_DR(0, reg, uop) )
+/** @} */
 
+/** \defgroup AETTRACE
+ *  @{
+ */
 #define AETTRACE_DCR(dst, val, src) \
     ( _AETTRACE | DST_ENCODE(dst) | (((val)&0x1f)<<18) | SRC1_ENCODE(src) )
 
 #define AETTRACE_DCM(dst, val, macro) \
     ( _AETTRACE | DST_ENCODE(dst) | (((val)&0x1f)<<18) | IMM_ENCODE_SRC1(macro) | MOD0 )
+/** @} */
 
-
-//Sequence word here:
-
-#define SEQ_UADDR(addr) ( ((addr) & 0x7fffUL) << 8 )
-
-#define SEQ_UP0(u)      ( ((u) & 0b11) << 0 )
-#define SEQ_UP1(u)      ( ((u) & 0b11) << 6 )
-#define SEQ_UP2(u)      ( ((u) & 0b11) << 23 )
-
-#define SEQ_EFLOW(x)    ( ((x) & 0b1111) << 2 )
-#define SEQ_SYNC(x)     ( ((x) & 0b111) << 25 )
-
-// idx controls which uop in triad to target
-
-#define SEQ_URET0(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0x2) )
-#define SEQ_URET1(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0x3) )
-#define SEQ_SAVEUIP0(idx)           ( SEQ_UP0(idx) | SEQ_EFLOW(0x4) )
-#define SEQ_SAVEUIP1(idx)           ( SEQ_UP0(idx) | SEQ_EFLOW(0x5) )
-#define SEQ_SAVEUIP0_REGOVR(idx)    ( SEQ_UP0(idx) | SEQ_EFLOW(0x6) )
-#define SEQ_SAVEUIP1_REGOVR(idx)    ( SEQ_UP0(idx) | SEQ_EFLOW(0x7) )
-#define SEQ_WRTAGW(idx)             ( SEQ_UP0(idx) | SEQ_EFLOW(0x8) )
-#define SEQ_MSLOOP(idx)             ( SEQ_UP0(idx) | SEQ_EFLOW(0x9) )
-#define SEQ_MSSTOP(idx)             ( SEQ_UP0(idx) | SEQ_EFLOW(0xb) )
-#define SEQ_UEND0(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xc) )
-#define SEQ_UEND1(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xd) )
-#define SEQ_UEND2(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xe) )
-#define SEQ_UEND3(idx)              ( SEQ_UP0(idx) | SEQ_EFLOW(0xf) )
-
-#define SEQ_GOTO0(addr)     ( SEQ_UP1(0) | SEQ_UADDR(addr) )
-#define SEQ_GOTO1(addr)     ( SEQ_UP1(1) | SEQ_UADDR(addr) )
-#define SEQ_GOTO2(addr)     ( SEQ_UP1(2) | SEQ_UADDR(addr) )
-
-#define SEQ_LFNCEWAIT(idx)  ( SEQ_UP2(idx) | SEQ_SYNC(1) )
-#define SEQ_LFNCEMARK(idx)  ( SEQ_UP2(idx) | SEQ_SYNC(2) )
-#define SEQ_LFNCEWTMRK(idx) ( SEQ_UP2(idx) | SEQ_SYNC(3) )
-#define SEQ_SYNCFULL(idx)   ( SEQ_UP2(idx) | SEQ_SYNC(4) )
-#define SEQ_SYNCWAIT(idx)   ( SEQ_UP2(idx) | SEQ_SYNC(5) )
-#define SEQ_SYNCMARK(idx)   ( SEQ_UP2(idx) | SEQ_SYNC(6) )
-#define SEQ_SYNCWTMRK(idx)  ( SEQ_UP2(idx) | SEQ_SYNC(7) )
-
-// shortcuts
-#define SEQ_NEXT    SEQ_UP1(3)
-#define SEQ_NOSYNC  SEQ_UP2(3)
-
-#define NOP_SEQWORD ( SEQ_NEXT | SEQ_NOSYNC )
-#define END_SEQWORD ( SEQ_UEND0(2) | SEQ_NEXT | SEQ_LFNCEWAIT(2) )
+#include "seqword.h"
 
 // helpers
 #define PUSHREG(src) \
-    SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVE_DSZ64_REG(TMP0, src), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
+    SUB_DSZ64_DIR(RSP, 0x8, RSP), MOVE_DSZ64_DR(TMP0, src), STAD_DSZ64_ASZ32_SC1_RR(TMP0, RSP, 0x3, 0x1a)
 
 #define PUSHCREG(creg) \
-    SUB_DSZ64_IMM(RSP, RSP, 0x8), MOVEFROMCREG_DSZ64(TMP0, creg), STAD_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL)
+    SUB_DSZ64_DIR(RSP, 0x8, RSP), MOVEFROMCREG_DSZ64_DI(TMP0, creg), STAD_DSZ64_ASZ32_SC1_RR(TMP0, RSP, 0x3, 0x1a)
 
 #define POPREG(dst) \
-    LDZX_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL), MOVE_DSZ64_REG(dst, TMP0), ADD_DSZ64_IMM(RSP, RSP, 0x8)
+    LDZX_DSZ64_ASZ32_SC1_DR(TMP0, RSP, 0x3, 0x1a), MOVE_DSZ64_DR(dst, TMP0), ADD_DSZ64_DRI(RSP, RSP, 0x8)
 
 #define POPCREG(creg) \
-    LDZX_DSZ64_ASZ32_SC1(TMP0, 0x3UL, RSP, 0x1aUL), MOVETOCREG_DSZ64(TMP0, creg), ADD_DSZ64_IMM(RSP, RSP, 0x8)
+    LDZX_DSZ64_ASZ32_SC1_DR(TMP0, RSP, 0x3, 0x1a), MOVETOCREG_DSZ64_DI(TMP0, creg), ADD_DSZ64_DRI(RSP, RSP, 0x8)
 
 #endif // UCODE_MACRO_H_

@@ -69,6 +69,7 @@
 #define R64DST  0x01UL
 #define R64SRC  0x02UL
 #define R64BASE 0x04UL
+#define R64IDX  0x05UL
 #define TMPV0   0x14UL
 #define TMPV1   0x15UL
 #define TMPV2   0x16UL
@@ -809,9 +810,5 @@
 #define _STADPPHYS_DSZ8_ASZ32_SC8 (0xff8UL << 32)
 /* #define _LDPPHYS_DSZ8_ASZ32_SC8 (0xffaUL << 32) */
 #define _SFENCE (0xfffUL << 32)
-
-
-// custom shit
-#define _DZX_DSZN_ASZ32_SC1 _LDZX_DSZ32_ASZ32_SC1
 
 #endif // OPCODE_H_

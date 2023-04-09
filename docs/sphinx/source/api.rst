@@ -46,3 +46,15 @@ uCode macros
 .. doxygengroup:: SETCC
 .. doxygengroup:: CMOVCC
 .. doxygengroup:: SELECTCC
+.. doxygengroup:: LDSTGBUF
+.. doxygengroup:: STADSTGBUF
+.. doxygengroup:: LDZX
+.. doxygengroup:: STAD
+.. doxygengroup:: SAVEUIP
+.. doxygengroup:: SAVEUIP_REGOVR
+.. doxygengroup:: READUIP_REGOVR
+.. doxygengroup:: URET
+.. doxygengroup:: UPDATEUSTATE
+.. doxygengroup:: TESTUSTATE
+.. doxygengroup:: UFLOWCTRL
+.. doxygengroup:: AETTRACE
