@@ -30,6 +30,10 @@ void install_jump_target(void) {
 }
 
 void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
+    if (hook_address % 4 != 0) {
+        printf("persistent_trace only supports 4-aligned uaddrs currently. (%04lx)\n", hook_address);
+        return;
+    }
     install_jump_target();
     u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+0) & CRC_UOP_MASK;
     u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+1) & CRC_UOP_MASK;
@@ -115,6 +119,7 @@ static struct argp_option options[] = {
     {.name="wait_trace", .key='w', .arg=NULL, .flags=0, .doc="wait for hit on trace"},
     {.name="xlat_fuzz", .key='x', .arg="uaddrs", .flags=0, .doc="start fuzzing xlats"},
     {.name="trace", .key='t', .arg="uaddr", .flags=0, .doc="trace ucode addr"},
+    {.name="backtrace", .key='b', .arg="uaddr,reg", .flags=0, .doc="get previous ucode addr"},
     {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
     {0}
 };
@@ -126,6 +131,8 @@ struct arguments{
     u8 reset;
     u8 wait;
     u8 xlat;
+    u8 bt_reg;
+    s32 bt_uaddr;
     s32 trace_addr;
     s32 uaddrs[0x10];
     u8 uaddr_count;
@@ -138,6 +145,8 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
     char *token;
     int i;
     struct arguments *arguments = state->input;
+    const char* uaddr_s;
+    const char* reg_s;
     switch(key){
 
         case 'v':
@@ -160,6 +169,21 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             }
             arguments->uaddr_count = i;
             arguments->xlat = 1;
+            break;
+        case 'b':
+            uaddr_s = strtok(arg, ",");
+            reg_s = strtok(NULL, "");
+            if (reg_s == NULL) {
+                argp_usage(state);
+                exit(EXIT_FAILURE);
+            }
+            arguments->bt_uaddr = strtol(uaddr_s, NULL, 0);
+            arguments->bt_reg = strtol(reg_s, NULL, 0);
+
+            if (arguments->bt_uaddr < 0 || arguments->bt_reg > 0xf) {
+                argp_usage(state);
+                exit(EXIT_FAILURE);
+            }
             break;
         case 't':
             arguments->trace_addr = strtol(arg, NULL, 0);
@@ -185,15 +209,15 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
 
 general_purpose_regs try_xlat(u64 val) {
     u64 rax = val;
-    general_purpose_regs result;
+    general_purpose_regs result = {0};
     lmfence();
     asm volatile(
-        "vmxon [rbx]\n\t"
+        "sysenter\n\t"
         : "=a" (result.rax)
         , "=b" (result.rbx)
         , "=c" (result.rcx)
         , "=d" (result.rdx)
-        : "a" (rax)
+        : "a" (rax), "b"(&result.rbx), "c"(3), "d"(4)
         : "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
     );
     lmfence();
@@ -226,6 +250,46 @@ void xlat_fuzzing(int* uaddrs, int size) {
     puts("");
 }
 
+void do_backtrace(u64 hook_address, u64 testreg) {
+    u64 aligned_hook_address = hook_address & ~3;
+    u64 uop0 = ldat_array_read(0x6a0, 0, 0, 0, aligned_hook_address+0) & CRC_UOP_MASK;
+    u64 uop1 = ldat_array_read(0x6a0, 0, 0, 0, aligned_hook_address+1) & CRC_UOP_MASK;
+    u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, aligned_hook_address+2) & CRC_UOP_MASK;
+    u64 seqw = ldat_array_read(0x6a0, 1, 0, 0, aligned_hook_address)   & CRC_SEQ_MASK;
+
+    if (verbose) {
+        printf("uop0: 0x%012lx\n", uop0);
+        printf("uop1: 0x%012lx\n", uop1);
+        printf("uop2: 0x%012lx\n", uop2);
+        printf("seqw: 0x%08lx\n", seqw);
+    }
+
+    unsigned long addr = 0x7c10;
+    if (hook_address % 4 == 0) {
+        #include "ucode/backtrace0.h"
+        patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
+    } else if (hook_address % 4 == 1) {
+        #include "ucode/backtrace1.h"
+        patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
+    } else if (hook_address % 4 == 2) {
+        #include "ucode/backtrace2.h"
+        patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
+    } else {
+        printf("Invalid uaddr\n");
+        exit(-1);
+    }
+    if (verbose)
+        printf("Patching %04lx -> %04lx\n", hook_address & ~1, addr);
+    hook_match_and_patch(1, hook_address & ~1, addr);
+
+    general_purpose_regs val = try_xlat(0xdeaddeaddeaddeadUL);
+    printf("rax:        0x%lx\n", val.rax);
+    printf("rbx:        0x%lx\n", val.rbx);
+    printf("rcx:        0x%lx\n", val.rcx);
+    printf("rdx:        0x%lx\n", val.rdx);
+    puts("");
+}
+
 
 // initialize the argp struct. Which will be used to parse and use the args.
 static struct argp argp = {options, parse_opt, args_doc, doc};
@@ -238,6 +302,7 @@ int main(int argc, char* argv[]) {
     struct arguments arguments;
     memset(&arguments, 0, sizeof(struct arguments));
     arguments.trace_addr = -1;
+    arguments.bt_uaddr = -1;
     arguments.core = -1;
 
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
@@ -275,6 +340,9 @@ int main(int argc, char* argv[]) {
             }
             printf("\nPath not hit\n");
         }
+    }
+    if (arguments.bt_uaddr > -1) { // Do backtrace
+        do_backtrace(arguments.bt_uaddr, arguments.bt_reg + 0x30);
     }
 
     return 0;
