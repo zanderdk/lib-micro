@@ -1,6 +1,6 @@
 unsigned long addr = 0x7c10;
 unsigned long hook_address = 0x0be0;
-unsigned long ucode_patch[][4] = {
+ucode_t ucode_patch[] = {
     {   // 0x7c10
         MOVE_DSZ64_DI(TMP2, 0x8000), 
         CONCAT_DSZ16_DRI(TMP2, TMP2, 0x2), 

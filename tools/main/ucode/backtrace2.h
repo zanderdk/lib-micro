@@ -1,4 +1,4 @@
-unsigned long ucode_patch[][4] = {
+ucode_t ucode_patch[] = {
     {   // 0x0
         MOVEFROMCREG_DSZ64_DI(testreg, CORE_CR_CUR_UIP),
         STADSTGBUF_DSZ64_ASZ16_SC1_RI(testreg, 0xba40),

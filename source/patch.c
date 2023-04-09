@@ -19,16 +19,22 @@ u64 ucode_addr_to_patch_seqword_addr(u64 addr) {
     return seq_addr % 0x80;
 }
 
-void patch_ucode(u64 addr, unsigned long ucode_patch[][4], int n) {
+void patch_ucode(u64 addr, ucode_t ucode_patch[], int n) {
     // format: uop0, uop1, uop2, seqword
     // uop3 is fixed to a nop and cannot be overridden
     for (int i = 0; i < n; i++) {
         // patch ucode
-        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+0, CRC_UOP(ucode_patch[i][0]));
-        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+1, CRC_UOP(ucode_patch[i][1]));
-        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+2, CRC_UOP(ucode_patch[i][2]));
+        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+0, CRC_UOP(ucode_patch[i].uop0));
+        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+1, CRC_UOP(ucode_patch[i].uop1));
+        ms_rw_code_write(ucode_addr_to_patch_addr(addr + i*4)+2, CRC_UOP(ucode_patch[i].uop2));
         // patch seqword
-        ms_rw_seq_write(ucode_addr_to_patch_seqword_addr(addr) + i, CRC_SEQ(ucode_patch[i][3]));
+        ms_rw_seq_write(ucode_addr_to_patch_seqword_addr(addr) + i, CRC_SEQ(ucode_patch[i].seqw));
+    }
+}
+
+void print_patch(u64 addr, ucode_t ucode_patch[], int n) {
+    for (int i = 0; i < n; i++) {
+        printf("%04lx: %012lx %012lx %012lx %08lx\n", addr+i*4, ucode_patch[i].uop0, ucode_patch[i].uop1, ucode_patch[i].uop2, ucode_patch[i].seqw);
     }
 }
 

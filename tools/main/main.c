@@ -17,7 +17,7 @@ u8 verbose = 0;
 void install_jump_target(void) {
     unsigned long addr = JUMP_DESTINATION;
 
-    unsigned long ucode_patch[][4] = {
+    ucode_t ucode_patch[] = {
     { MOVE_DSZ64_DI(RAX, 0x1234), MOVE_DSZ64_DR(RBX, TMP1), NOP,
             SEQ_NEXT | SEQ_SYNCWTMRK(2) }, //0x7d00
         {UNK256, NOP, NOP, END_SEQWORD}, //0x7d04
@@ -40,13 +40,7 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
     u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, hook_address+2) & CRC_UOP_MASK;
     u64 seqw = ldat_array_read(0x6a0, 1, 0, 0, hook_address)   & CRC_SEQ_MASK;
 
-    if (verbose) {
-        printf("uop0: 0x%012lx\n", uop0);
-        printf("uop1: 0x%012lx\n", uop1);
-        printf("uop2: 0x%012lx\n", uop2);
-        printf("seqw: 0x%08lx\n", seqw);
-    }
-    unsigned long ucode_patch[][4] = {
+    ucode_t ucode_patch[] = {
         {   // 0x0
             UJMP_I(addr+0x4),
             UJMP_I(addr+0x15),
@@ -86,13 +80,10 @@ void persistent_trace(u64 addr, u64 hook_address, u64 idx) {
     };
 
     if (verbose) {
-        for (u64 i = 0; i < ARRAY_SZ(ucode_patch); i++) {
-            printf("%04lx: %012lx %012lx %012lx %012lx\n", i, ucode_patch[i][0], ucode_patch[i][1], ucode_patch[i][2], ucode_patch[i][3]);
-        }
+        printf("Patching %04lx -> %04lx\n", hook_address, addr);
+        print_patch(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     }
 
-    if (verbose)
-        printf("patching addr: %08lx - ram: %08lx\n", addr, ucode_addr_to_patch_addr(addr));
     patch_ucode(addr, ucode_patch, ARRAY_SZ(ucode_patch));
     hook_match_and_patch(idx, hook_address, addr);
 }
@@ -257,13 +248,6 @@ void do_backtrace(u64 hook_address, u64 testreg) {
     u64 uop2 = ldat_array_read(0x6a0, 0, 0, 0, aligned_hook_address+2) & CRC_UOP_MASK;
     u64 seqw = ldat_array_read(0x6a0, 1, 0, 0, aligned_hook_address)   & CRC_SEQ_MASK;
 
-    if (verbose) {
-        printf("uop0: 0x%012lx\n", uop0);
-        printf("uop1: 0x%012lx\n", uop1);
-        printf("uop2: 0x%012lx\n", uop2);
-        printf("seqw: 0x%08lx\n", seqw);
-    }
-
     unsigned long addr = 0x7c10;
     if (hook_address % 4 == 0) {
         #include "ucode/backtrace0.h"
@@ -292,7 +276,7 @@ void do_backtrace(u64 hook_address, u64 testreg) {
 
 
 // initialize the argp struct. Which will be used to parse and use the args.
-static struct argp argp = {options, parse_opt, args_doc, doc};
+static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 
 int main(int argc, char* argv[]) {
     setbuf(stdin, NULL);

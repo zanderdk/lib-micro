@@ -1,5 +1,5 @@
 unsigned long addr = 0x7de0;
-unsigned long ucode_patch[][4] = {
+ucode_t ucode_patch[] = {
     {   // 0x7de0
         MOVE_DSZ64_DR(TMP0, RDI), 
         MOVE_DSZ64_DR(TMP1, RSI), 

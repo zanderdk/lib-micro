@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O0 -fPIE -Wno-unused-function -Wno-unused-variable -ggdb -Wall -masm=intel -I include/
+CFLAGS = -O0 -fPIE -Wno-unused-function -Wmissing-field-initializers -Wno-unused-variable -ggdb -Wall -masm=intel -I include/
 TARGET_LIB_SHARED = build/libmicro.so
 TARGET_LIB_STATIC = build/libmicro.a
 
@@ -18,12 +18,12 @@ export
 include/inst.h: include/gen_inst.py
 	./include/gen_inst.py > include/inst.h
 
-$(SOURCES): include/inst.h $(HEADERS) build
+$(SOURCES): include/inst.h build
 
 build:
 	mkdir build
 
-$(OBJECTS): build/%.o: source/%.c
+$(OBJECTS): build/%.o: source/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 ${TARGET_LIB_STATIC}: $(OBJECTS)

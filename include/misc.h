@@ -31,6 +31,13 @@ typedef struct {
     u64 rdx;
 } general_purpose_regs;
 
+typedef struct {
+    u64 uop0;
+    u64 uop1;
+    u64 uop2;
+    u64 seqw;
+} ucode_t;
+
 #define ARRAY_SZ(arr) \
     ( sizeof(arr) / sizeof(arr[0]) )
 

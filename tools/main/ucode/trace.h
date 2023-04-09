@@ -1,5 +1,5 @@
 unsigned long addr = 0x7c10;
-unsigned long ucode_patch[][4] = {
+ucode_t ucode_patch[] = {
     {   // 0x7c10
         // 1) save all the registers to restore them
         // NOTICE: assume no one else uses [0xba00, 0xbb00] in the staging buffer

@@ -1,4 +1,4 @@
-unsigned long ucode_patch[][4] = {
+ucode_t ucode_patch[] = {
     {   // 0x0
         UJMP_I(addr+0xc),
         MOVEFROMCREG_DSZ64_DI(testreg, CORE_CR_CUR_UIP),

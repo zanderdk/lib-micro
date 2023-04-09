@@ -1,5 +1,5 @@
 unsigned long addr = 0x7de0;
-unsigned long ucode_patch[][4] = {
+ucode_t ucode_patch[] = {
     {   // 0x7de0
         ZEROEXT_DSZ32_DI(TMP0, 0x0),
         ZEROEXT_DSZ32_DI(TMP9, 0x303),
