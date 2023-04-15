@@ -331,4 +331,128 @@ static inline unsigned long long parity1(unsigned long long value) {
 #define POPCREG(creg) \
     LDZX_DSZ64_ASZ32_SC1_DR(TMP0, RSP, 0x3, 0x1a), MOVETOCREG_DSZ64_DI(TMP0, creg), ADD_DSZ64_DRI(RSP, RSP, 0x8)
 
+//see section
+#define PINTMOVQI2XMMLQ_DSZ64(xmm_dst, src) \
+    ( _PINTMOVQI2XMMLQ_DSZ64 | DST_ENCODE(xmm_dst) | SRC0_ENCODE(src) | MOD2 )
+
+#define PINTMOVQXMMLQ2I_DSZ64(dst, xmm_src) \
+    ( _PINTMOVQXMMLQ2I_DSZ64 | DST_ENCODE(dst) | SRC0_ENCODE(xmm_src) | MOD2 )
+
+#define MOVUSS(dst, src) \
+    _MOVUSS | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define SHUFSS(dst, src) \
+    _SHUFSS | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define MOVUSD(dst, src) \
+    _MOVUSD | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define SHUFSD(dst, src) \
+    _SHUFSD | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define MOVUPD(dst, src) \
+    _MOVUPD | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define SHUFPD(dst, src) \
+    _SHUFPD | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define MOVUPS(dst, src) \
+    _MOVUPS | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define SHUFPS(dst, src) \
+    _SHUFPS | DST_ENCODE(dst) | SRC0_ENCODE(src)
+
+#define MULSS(dst, src, src2) \
+    _MULSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SQRTSS(dst, src, src2) \
+    _SQRTSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define DIVSS(dst, src, src2) \
+    _DIVSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define ADDSS(dst, src, src2) \
+    _ADDSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SUBSS(dst, src, src2) \
+    _SUBSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MINSS(dst, src, src2) \
+    _MINSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define CMPSS(dst, src, src2) \
+    _CMPSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MAXSS(dst, src, src2) \
+    _MAXSS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SQRTSD(dst, src, src2) \
+    _SQRTSD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define DIVSD(dst, src, src2) \
+    _DIVSD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define ADDSD(dst, src, src2) \
+    _ADDSD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SUBSD(dst, src, src2) \
+    _SUBSD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MINSD(dst, src, src2) \
+    _MINSD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define CMPSD(dst, src, src2) \
+    _CMPSD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MAXSD(dst, src, src2) \
+    _MAXSD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MULPD(dst, src, src2) \
+    _MULPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SQRTPD(dst, src, src2) \
+    _SQRTPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define DIVPD(dst, src, src2) \
+    _DIVPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define ADDPD(dst, src, src2) \
+    _MADDPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SUBPD(dst, src, src2) \
+    _SUBPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MINPD(dst, src, src2) \
+    _MINPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define CMPPD(dst, src, src2) \
+    _CMPPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MAXPD(dst, src, src2) \
+    _MAXPD | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MULPS(dst, src, src2) \
+    _MULPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SQRTPS(dst, src, src2) \
+    _SQRTPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define DIVPS(dst, src, src2) \
+    _DIVPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define ADDPS(dst, src, src2) \
+    _ADDPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define SUBPS(dst, src, src2) \
+    _SUBPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MINPS(dst, src, src2) \
+    _MINPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define CMPPS(dst, src, src2) \
+    _CMPPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
+#define MAXPS(dst, src, src2) \
+    _MAXPS | DST_ENCODE(dst) | SRC0_ENCODE(src) | SRC1_ENCODE(src2)
+
 #endif // UCODE_MACRO_H_
