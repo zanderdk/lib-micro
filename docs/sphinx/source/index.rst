@@ -12,6 +12,7 @@ Welcome to lib-micro's documentation!
 
    about
    microcode_memory
+   assembly
    structure
    api
 

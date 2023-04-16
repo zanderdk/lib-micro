@@ -1,3 +1,4 @@
+.. _structure:
 
 uCode structure
 =================================
