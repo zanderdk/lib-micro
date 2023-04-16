@@ -18,6 +18,7 @@ static char args_doc[] = "";
 
 // cli argument availble options.
 static struct argp_option options[] = {
+    {.name="dump_crbus", .key='b', .arg=NULL, .flags=0, .doc="dump uram"},
     {.name="dump_ram", .key='d', .arg=NULL, .flags=0, .doc="dump uram"},
     {.name="dump_array", .key='a', .arg="array", .flags=0, .doc="dump array"},
     {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
@@ -27,6 +28,7 @@ static struct argp_option options[] = {
 
 // define a struct to hold the arguments.
 struct arguments{
+    u8 bus;
     u8 uram;
     s8 array;
     s8 core;
@@ -41,6 +43,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
     switch(key){
         case 'd':
             arguments->uram = 1;
+            break;
+        case 'b':
+            arguments->bus = 1;
             break;
         case 'a':
             arguments->array = strtol(arg, NULL, 0);
@@ -106,6 +111,10 @@ int main(int argc, char* argv[]) {
 
     if(arguments.uram) {
         uram_dump();
+    }
+
+    if(arguments.bus) {
+        crbus_dump();
     }
 
     return 0;

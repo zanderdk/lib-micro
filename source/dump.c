@@ -47,3 +47,13 @@ void uram_dump(void) {
         printf("%04lx: %016lx %016lx %016lx %016lx\n", i, val0, val1, val2, val3);
     }
 }
+
+void crbus_dump(void) {
+    for (u64 i = 0; i < 0x800; i += 4) {
+        u64 val0 = crbus_read(i);
+        u64 val1 = crbus_read(i+1);
+        u64 val2 = crbus_read(i+2);
+        u64 val3 = crbus_read(i+3);
+        printf("%04lx: %016lx %016lx %016lx %016lx\n", i, val0, val1, val2, val3);
+    }
+}
