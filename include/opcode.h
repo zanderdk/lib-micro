@@ -94,7 +94,7 @@
 #define ROB1_CR_ICECTLPMR 0x2dfUL
 #define ML3_CR_PIC_DEBUG_MODES 0x2e6UL
 #define PMH_CR_BRAM_BASE 0x51bUL
-#define PMH_CR_CR3 0x528UL
+#define PMH_CR_CR3 0x529UL
 #define PMH_CR_ELSRR_BASE 0x555UL
 #define PMH_CR_ELSRR_MASK 0x556UL
 #define PMH_CR_EPCM_BASE 0x557UL
@@ -116,51 +116,72 @@
 #define CORE_CR_EFLAGS 0x7feUL
 
 // macro imms
-#define IMM_MACRO_ALIAS_DISPLACEMENT    0x00
-#define IMM_MACRO_ALIAS_IMMEDIATE       0x00
-#define IMM_MACRO_ALIAS_RIP             0x04
-#define IMM_MACRO_ALIAS_STI             0x05
-#define IMM_MACRO_ALIAS_MSLOOPCTR       0x08
-#define IMM_MACRO_ALIAS_DATASIZE        0x0b
-#define IMM_MACRO_ALIAS_INSTRUCTION     0x10
+#define IMM_MACRO_ALIAS_DISPLACEMENT    0x00UL
+#define IMM_MACRO_ALIAS_IMMEDIATE       0x00UL
+#define IMM_MACRO_ALIAS_RIP             0x04UL
+#define IMM_MACRO_ALIAS_STI             0x05UL
+#define IMM_MACRO_ALIAS_MSLOOPCTR       0x08UL
+#define IMM_MACRO_ALIAS_DATASIZE        0x0bUL
+#define IMM_MACRO_ALIAS_INSTRUCTION     0x10UL
 
 // ustate UCODE
-#define UST_MSLOOPCTR_NONZERO   0x0001
-#define UST_SMM                 0x0800
+#define UST_MSLOOPCTR_NONZERO   0x0001UL
+#define UST_SMM                 0x0800UL
 
 // ustate SYS
-#define UST_VMX_DIS         0x0001
-#define UST_USER_MODE       0x0002
-#define UST_8086_MODE       0x0004
-#define UST_OP_SIZE_32BIT   0x0008
-#define UST_ADDR_SIZE_64BIT 0x0010
-#define UST_XUCODE          0x0020
-#define UST_SE_INIT_DONE    0x0040
-#define UST_VMX_GUEST       0x0080
-#define UST_VMX_OP_DIS      0x0100
+#define UST_VMX_DIS         0x0001UL
+#define UST_USER_MODE       0x0002UL
+#define UST_8086_MODE       0x0004UL
+#define UST_OP_SIZE_32BIT   0x0008UL
+#define UST_ADDR_SIZE_64BIT 0x0010UL
+#define UST_XUCODE          0x0020UL
+#define UST_SE_INIT_DONE    0x0040UL
+#define UST_VMX_GUEST       0x0080UL
+#define UST_VMX_OP_DIS      0x0100UL
+
+// Segment selectors
+#define SEG_PHYS 0x01UL
+#define SEG_GDT  0x06UL
+#define SEG_LDT  0x07UL
+#define SEG_ES   0x08UL
+#define SEG_CS   0x09UL
+#define SEG_FS   0x0cUL
+#define SEG_GS   0x0dUL
+#define SEG_IDT  0x0eUL
+#define SEG_TSS  0x0fUL
+#define SEG_DS   0x18UL
+#define SEG_SS   0x1aUL
+
+// Segment descriptor fields
+#define FLD_LIMIT_VAL    0x0UL
+#define FLD_BASE         0x2UL
+#define FLD_FLGS         0x4UL
+#define FLD_LIMIT        0x6UL
+#define FLD_SEL          0x8UL
+#define FLD_SEL_FLGS_LIM 0xaUL
 
 // opcode parts
-#define _CONDO      0x000
-#define _CONDNO     0x100
-#define _CONDB      0x200
-#define _CONDNB     0x300
-#define _CONDZ      0x001
-#define _CONDNZ     0x101
-#define _CONDBE     0x201
-#define _CONDNBE    0x301
-#define _CONDS      0x002
-#define _CONDNS     0x102
-#define _CONDP      0x202
-#define _CONDNP     0x302
-#define _CONDL      0x003
-#define _CONDNL     0x103
-#define _CONDLE     0x203
-#define _CONDNLE    0x303
+#define _CONDO      0x000UL
+#define _CONDNO     0x100UL
+#define _CONDB      0x200UL
+#define _CONDNB     0x300UL
+#define _CONDZ      0x001UL
+#define _CONDNZ     0x101UL
+#define _CONDBE     0x201UL
+#define _CONDNBE    0x301UL
+#define _CONDS      0x002UL
+#define _CONDNS     0x102UL
+#define _CONDP      0x202UL
+#define _CONDNP     0x302UL
+#define _CONDL      0x003UL
+#define _CONDNL     0x103UL
+#define _CONDLE     0x203UL
+#define _CONDNLE    0x303UL
 
-#define _DSZ32  0x000
-#define _DSZ64  0x040
-#define _DSZ16  0x080
-#define _DSZ8   0x0c0
+#define _DSZ32  0x000UL
+#define _DSZ64  0x040UL
+#define _DSZ16  0x080UL
+#define _DSZ8   0x0c0UL
 
 // opcodes
 #define NOP (0x0)

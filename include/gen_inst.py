@@ -26,8 +26,20 @@ argdefs = {
     'DRM': '#define INSTRNAME_DRM(dst, src, macro) ( _INSTRNAME | INSTR_DRM(dst, src, macro)APPEND )',
     'DMR': '#define INSTRNAME_DMR(dst, macro, src) ( _INSTRNAME | INSTR_DMR(dst, macro, src)APPEND )',
     'DRR': '#define INSTRNAME_DRR(dst, src0, src1) ( _INSTRNAME | INSTR_DRR(dst, src0, src1)APPEND )',
+
+    'MEM_DR': '#define INSTRNAME_DR(dst, base_reg, seg) ( _INSTRNAME | MEMOP_ENCODE(dst, base_reg, 0, 0, seg) )',
+    'MEM_DRR': '#define INSTRNAME_DRR(dst, base_reg, index_reg, seg) ( _INSTRNAME | MEMOP_ENCODE(dst, base_reg, index_reg, 0, seg) )',
+    'MEM_DRI': '#define INSTRNAME_DRI(dst, base_reg, offset, seg) ( _INSTRNAME | MEMOP_ENCODE(dst, base_reg, 0, offset, seg) )',
+    'MEM_DRRI': '#define INSTRNAME_DRRI(dst, base_reg, index_reg, offset, seg) ( _INSTRNAME | MEMOP_ENCODE(dst, base_reg, index_reg, offset, seg) )',
+    'MEM_RR': '#define INSTRNAME_RR(src, base_reg, seg) ( _INSTRNAME | MEMOP_ENCODE(src, base_reg, 0, 0, seg) )',
+    'MEM_RRR': '#define INSTRNAME_RRR(src, base_reg, index_reg, seg) ( _INSTRNAME | MEMOP_ENCODE(src, base_reg, index_reg, 0, seg) )',
+    'MEM_RRI': '#define INSTRNAME_RRI(src, base_reg, offset, seg) ( _INSTRNAME | MEMOP_ENCODE(src, base_reg, 0, offset, seg) )',
+    'MEM_RRRI': '#define INSTRNAME_RRRI(src, base_reg, index_reg, offset, seg) ( _INSTRNAME | MEMOP_ENCODE(src, base_reg, index_reg, offset, seg) )',
 }
-dsizes = [8, 16, 32, 64]
+
+dsizes = ['DSZ8', 'DSZ16', 'DSZ32', 'DSZ64']
+asizes = ['ASZ64', 'ASZ32', 'ASZ16']
+scales = ['SC1', 'SC4', 'SC8']
 conditions = ["CONDO", "CONDNO", "CONDB", "CONDNB", "CONDZ", "CONDNZ", "CONDBE", "CONDNBE", "CONDS", "CONDNS", "CONDP", "CONDNP", "CONDL", "CONDNL", "CONDLE", "CONDNLE"]
 
 instructions = [
@@ -43,7 +55,7 @@ instructions = [
     {
         'name': 'ZEROEXT',
         'dsz': True,
-        'args': ['DR0', 'DI0', 'DM0'],
+        'args': ['DR0', 'DI0', 'DM0', 'DRR', 'DIR', 'DMR'],
     },
     {
         'name': 'MOVETOCREG',
@@ -73,7 +85,7 @@ instructions = [
     },
     {
         'name': 'WRMSLOOPCTRFBR',
-        'args': ['R1', 'I1'],
+        'args': ['I1'],
     },
     {
         'name': 'GENARITHFLAGS',
@@ -194,10 +206,43 @@ instructions = [
         'dsz': True,
         'cond': True,
         'args': ['DRI', 'DRR'],
+    },
+    {
+        'name': 'LDZX',
+        'dsz': True,
+        'asz': True,
+        'sc': True,
+        'args': ['MEM_DR', 'MEM_DRR', 'MEM_DRI', 'MEM_DRRI'],
+    },
+    {
+        'name': 'STAD',
+        'dsz': True,
+        'asz': True,
+        'sc': True,
+        'args': ['MEM_RR', 'MEM_RRR', 'MEM_RRI', 'MEM_RRRI'],
+    },
+    {
+        'name': 'SIMDLD',
+        'suffix': 'DSZ64_ASZ32_SC1',
+        'args': ['MEM_DR', 'MEM_DRR', 'MEM_DRI', 'MEM_DRRI'],
+    },
+    {
+        'name': 'SIMDSTA',
+        'suffix': 'DSZ64_ASZ32_SC1',
+        'args': ['MEM_RR', 'MEM_RRR', 'MEM_RRI', 'MEM_RRRI'],
+    },
+    {
+        'name': 'LEA',
+        'dsz': ['DSZ64'],
+        'asz': True,
+        'sc': True,
+        'args': ['MEM_DR', 'MEM_DRR', 'MEM_DRI', 'MEM_DRRI'],
     }
 ]
 
 def add_args(inst, name):
+    if 'suffix' in inst:
+        name += "_{}".format(inst['suffix'])
     for arg in inst['args']:
         if arg not in argdefs:
             print(f'Invalid arg "{arg}"', file=sys.stderr)
@@ -216,22 +261,25 @@ def add_cond(inst, name):
 
 def add_sc(inst, name):
     if inst.get('sc'):
-        for i in inst['sc']:
-            add_cond(inst, name + '_SC{}'.format(i))
+        l = scales if inst.get('sc') is True else inst.get('sc')
+        for i in l:
+            add_cond(inst, name + '_{}'.format(i))
     else:
         add_cond(inst, name)
 
 def add_asz(inst, name):
     if inst.get('asz'):
-        for i in inst['asz']:
-            add_sc(inst, name + '_ASZ{}'.format(i))
+        l = asizes if inst.get('asz') is True else inst.get('asz')
+        for i in l:
+            add_sc(inst, name + '_{}'.format(i))
     else:
         add_sc(inst, name)
 
 def add_dsz(inst, name):
     if inst.get('dsz'):
-        for i in dsizes:
-            add_asz(inst, name + '_DSZ{}'.format(i))
+        l = dsizes if inst.get('dsz') is True else inst.get('dsz')
+        for i in l:
+            add_asz(inst, name + '_{}'.format(i))
     else:
         add_asz(inst, name)
 
