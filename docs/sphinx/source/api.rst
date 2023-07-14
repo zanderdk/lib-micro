@@ -58,3 +58,6 @@ uCode macros
 .. doxygengroup:: TESTUSTATE
 .. doxygengroup:: UFLOWCTRL
 .. doxygengroup:: AETTRACE
+
+.. doxygenfunction:: uram_dump
+.. doxygenfunction:: ms_rw_code_dump

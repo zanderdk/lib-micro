@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
         } else if (array_idx == 1) {
             ms_ro_seqw_dump();
         } else if (array_idx == 2) {
-            ms_match_n_patch_dump();
+            ms_rw_seqw_dump();
         } else if (array_idx == 3) {
             ms_match_n_patch_dump();
         } else if (array_idx == 4) {
