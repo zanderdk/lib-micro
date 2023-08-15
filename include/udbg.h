@@ -1,6 +1,7 @@
 #ifndef UDBG_H_
 #define UDBG_H_
 #include "misc.h"
+#include <string.h>
 
 typedef struct {
     u64 value;
@@ -41,7 +42,6 @@ u_result_t static inline udbgwr(uint64_t type, uint64_t addr, uint64_t value) {
     return res;
 }
 
-
 __attribute__((always_inline))
 uint64_t static inline ucode_invoke(uint64_t addr) {
     uint64_t rax = addr, rcx = 0xD8;
@@ -55,6 +55,26 @@ uint64_t static inline ucode_invoke(uint64_t addr) {
     );
     lmfence();
     return rax;
+}
+
+__attribute__((always_inline))
+general_purpose_regs static inline generic_ucode_invoke(uint64_t addr) {
+    general_purpose_regs regs;
+    memset(&regs, 0, sizeof(regs));
+    regs.rcx = 0xD8;
+    regs.rax = addr;
+    lmfence();
+    asm volatile(
+        ".byte 0x0F, 0x0F\n\t"
+        : "+a" (regs.rax)
+        , "+b" (regs.rbx)
+        , "+c" (regs.rcx)
+        , "+d" (regs.rdx)
+        :
+        : "rdi", "rsi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+    );
+    lmfence();
+    return regs;
 }
 
 __attribute__((always_inline))
